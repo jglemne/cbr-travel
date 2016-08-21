@@ -3,6 +3,7 @@
 # import modules used here -- sys is a very standard one
 # import sys
 import openpyxl
+import operator
 # import time
 
 
@@ -15,52 +16,45 @@ def main():
     sheet_name = sheet_names[0]
     sheet = wb.get_sheet_by_name(sheet_name)
     # start_time = time.time()
-    load_cases(sheet)
+    target_case = TargetCase()
+    # target_case = TargetCase()
+    load_cases(sheet, target_case)
     # indices = [i for i, x in enumerate(JourneyCase.personspercase) if x > 6]
-    print({}.fromkeys(JourneyCase.holidaytypes).keys())
+    # print(JourneyCase.regions[12].region)
+    # print(JourneyCase.holidaytypes)
+    # print(JourneyCase.regions['Sweden,'].journeycode)
+    # indices = get_cases_price_interval(800, 900)
+    # codes = []
+    # for val in indices:
+    #     codes.append(val.journeycode)
+    target_case.price = 5000
+    print(JourneyCase.similarities()[0][0].price)
+    target_case.price = 3000
+    print(JourneyCase.similarities()[0][0].price)
+    # print(JourneyCase.journeycodes[1024].similarity())
+    # source_cases = JourneyCase.cases
+    # cases = compare_cases(target_case, source_cases)
+    # print(sorted(JourneyCase.similarities().items(), key=operator.itemgetter(1)))
+    # print({}.fromkeys(JourneyCase.holidaytypes).keys())
 
 
-class JourneyCase:
-    cases = {}
-    journeycodes = {}
-    holidaytypes = {}
-    holidaylist = []
-    prices = []
-    personspercase = []
-    # regions = {}
-    # transportations = {}
-    # durations = []
-    # seasons = {}
-    # accommodations = {}
-    # hotels = {}
-
-    @classmethod
-    def create(
-            cls, case, journeycode, holidaytype,
-            price, numberofpersons, region, transportation,
-            duration, season, accommodation, hotel):
-        instance = JourneyCase(
-            case, journeycode, holidaytype,
-            price, numberofpersons, region, transportation,
-            duration, season, accommodation, hotel)
-        cls.cases[case] = instance
-        cls.journeycodes[journeycode] = instance
-        cls.holidaytypes[holidaytype] = instance
-        cls.prices.append(instance.price)
-        cls.personspercase.append(instance.numberofpersons)
-        cls.holidaylist.append(instance.holidaytype)
-        # cls.regions[region] = instance
-        # cls.transportations[transportation] = instance
-        # cls.durations[duration] = instance
-        # cls.seasons[season] = instance
-        # cls.accommodations[accommodation] = instance
-        # cls.hotels[hotel] = instance
-        return instance
+class TargetCase:
+    # target_price = 0
+    #
+    # @classmethod
+    # def create(cls, case, journeycode, holidaytype,
+    #         price, numberofpersons, region, transportation,
+    #         duration, season, accommodation, hotel):
+    #     instance = TargetCase(
+    #         case, journeycode, holidaytype,
+    #         price, numberofpersons, region, transportation,
+    #         duration, season, accommodation, hotel)
+    #     cls.target_price = instance.price
 
     def __init__(
-            self, case, journeycode, holidaytype,
-            price, numberofpersons, region, transportation,
-            duration, season, accommodation, hotel):
+            self, case=None, journeycode=None, holidaytype=None,
+            price=None, numberofpersons=None, region=None, transportation=None,
+            duration=None, season=None, accommodation=None, hotel=None):
         self.case = case
         self.journeycode = journeycode
         self.holidaytype = holidaytype
@@ -74,7 +68,87 @@ class JourneyCase:
         self.hotel = hotel
 
 
-def load_cases(sheet):
+class JourneyCase:
+    cases = {}
+    journeycodes = {}
+    holidaytypes = {}
+    holidaylist = []
+    prices = {}
+    pricesdict = {}
+    personspercase = []
+    regions = {}
+    price_range = 6882
+    # target_price = 0
+    # transportations = {}
+    # durations = []
+    # seasons = {}
+    # accommodations = {}
+    # hotels = {}
+
+    @classmethod
+    def create(
+            cls, case, journeycode, holidaytype,
+            price, numberofpersons, region, transportation,
+            duration, season, accommodation, hotel, target_case):
+        instance = JourneyCase(
+            case, journeycode, holidaytype,
+            price, numberofpersons, region, transportation,
+            duration, season, accommodation, hotel, target_case)
+        cls.cases[instance] = instance
+        cls.journeycodes[journeycode] = instance
+        if instance.holidaytype not in cls.holidaytypes:
+            cls.holidaytypes[instance.holidaytype] = []
+        cls.holidaytypes[instance.holidaytype].append(instance)
+        cls.prices[instance] = instance.price
+        cls.personspercase.append(instance.numberofpersons)
+        cls.holidaylist.append(instance.holidaytype)
+        cls.regions[region] = instance
+        # cls.target_price = instance.target_case.price
+        # cls.transportations[transportation] = instance
+        # cls.durations[duration] = instance
+        # cls.seasons[season] = instance
+        # cls.accommodations[accommodation] = instance
+        # cls.hotels[hotel] = instance
+        return instance
+
+    def __init__(
+            self, case=None, journeycode=None, holidaytype=None,
+            price=None, numberofpersons=None, region=None, transportation=None,
+            duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
+        self.case = case
+        self.journeycode = journeycode
+        self.holidaytype = holidaytype
+        self.price = price
+        self.numberofpersons = numberofpersons
+        self.region = region
+        self.transportation = transportation
+        self.duration = duration
+        self.season = season
+        self.accommodation = accommodation
+        self.hotel = hotel
+        self.target_case = target_case
+        self.similarity()
+
+    def similarity(self):
+        sim_int = 0
+        if self.target_case.price is not None:
+            sim_int += self.price_sim()
+        else:
+            sim_int += 1
+        return sim_int
+
+    def price_sim(self):
+        return (self.price_range - abs(self.target_case.price - self.price)) / self.price_range
+
+    @classmethod
+    def similarities(cls):
+        similarities = {}
+        for instance in cls.cases:
+            similarities[instance] = instance.similarity()
+        return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
+
+
+def load_cases(sheet, target_case):
     case_column = 3
     case_row = 1
     is_case = True
@@ -89,7 +163,7 @@ def load_cases(sheet):
             JourneyCase.create(
                 case[0], case[1], case[2], case[3],
                 case[4], case[5], case[6], case[7],
-                case[8], case[9], case[10])
+                case[8], case[9], case[10], target_case)
         case_row += 16
 
 
@@ -109,16 +183,42 @@ def count_cases(sheet):
     return number_of_cases
 
 
-def repeat(s, exclaim):
-    """
-    Returns the string 's' repeated 3 times.
-    If exclaim is true, add exclamation marks.
-    """
+def get_cases_price_interval(lowest_price, highest_price):
+    indices = []
+    my_dict = JourneyCase.prices
+    for price in range(lowest_price, highest_price):
+        empty_dict = False
+        while not empty_dict:
+            if price in my_dict.values():
+                case = list(my_dict.keys())[list(my_dict.values()).index(price)]
+                indices.append(case)
+                my_dict = remove_key(my_dict, case)
+            else:
+                empty_dict = True
+    return indices
 
-    result = s + ' ' + s + ' ' + s  # can also use "s * 3" which is faster (Why?)
-    if exclaim:
-        result = str(result) + '!!!'
-    return result
+
+def compare_cases(target_case, source_cases):
+    similar_cases = {}
+    if target_case.price is not None:
+        for case in source_cases:
+            range_prices = JourneyCase.price_range[1] - JourneyCase.price_range[0]
+            diff = abs(target_case.price - case.price)
+            similarity = (range_prices - diff)/range_prices
+            similar_cases[case.journeycode] = similarity
+            # if target_case.price == case.price:
+            #     return case.journeycode
+            # print(case)
+        return similar_cases
+    else:
+        return None
+
+
+def remove_key(d, key):
+    r = dict(d)
+    del r[key]
+    return r
+
 
 # Standard boilerplate to call the main() function to begin
 # the program.
