@@ -8,6 +8,8 @@ import operator
 import time
 from geopy.geocoders import Nominatim
 from geopy.distance import great_circle
+# import magic
+# import numpy as np
 # import re
 # from time import sleep
 
@@ -15,33 +17,32 @@ from geopy.distance import great_circle
 
 
 def main():
-    wb = openpyxl.load_workbook('travel.xlsx')
-    sheet_names = wb.get_sheet_names()
-    sheet_name = sheet_names[0]
-    sheet = wb.get_sheet_by_name(sheet_name)
     target_case = TargetCase(
-        holiday_type='Active',
+        # holiday_type='Active',
         accommodation='FiveStars',
-        price=500,
-        duration=21,
+        price=4332,
+        duration=7,
         number_of_persons=4,
         region='Sweden',
-        transportation='Train',
-        season='June'
+        transportation='Car',
+        # season='December',
+        # hotel='H.Flat Les Olympiades, France.'
+        # journey_code='134'
     )
-    load_cases(sheet, target_case)
+    # start_time = time.time()
+    # load_cases_excel('TRAVEL.xlsx', target_case)
+    # print("--- %s seconds ---" % (time.time() - start_time))
+    target_case.ht = 'Recreation'
+    target_case.nop = 2
     start_time = time.time()
-    print(JourneyCase.similarities()[0][0].journey_code)
+    load_cases_ascii('reise.cases', target_case)
     print("--- %s seconds ---" % (time.time() - start_time))
-    # print(JourneyCase.similarities()[0][0].region.list_regions())
-    # a = [7.0, 2, 3]
-    # b = [2, 4, 7, 1]
-    # print(sorted(set(a).intersection(b)))
+    print(JourneyCase.similarities()[0][0].journey_code.number)
 
 
 class Accommodation:
     indices = {'HolidayFlat': 1, 'OneStar': 2, 'TwoStars': 3, 'ThreeStars': 4, 'FourStars': 5, 'FiveStars': 6}
-    weight = 1
+    weight = 3
 
     def __init__(self, accommodation=None):
         self.name = accommodation
@@ -62,22 +63,36 @@ class HolidayType:
         'Wandering': '1000100', 'Adventure': '1001001', 'Diving': '1010001', 'Skiing': '1011001',
         'Surfing': '1100001'
     }
-    weight = 1
+    weight = 10
 
     def __init__(self, holiday_type=None):
         self.name = holiday_type
         self.group = self.groups.get(holiday_type)
 
 
+class Hotel:
+    weight = 20
+
+    def __init__(self, hotel=None):
+        self.name = hotel
+
+
+class JourneyCode:
+    weight = 200
+
+    def __init__(self, journey_code=None):
+        self.number = journey_code
+
+
 class NumberOfPersons:
-    weight = 1
+    weight = 2
 
     def __init__(self, number_of_persons=None):
         self.total = number_of_persons
 
 
 class Price:
-    weight = 1
+    weight = 7
 
     def __init__(self, price=None, number_of_persons=None):
         self.total = price
@@ -88,7 +103,7 @@ class Price:
 
 
 class Region:
-    weight = 1
+    weight = 2
     distance = 2000
     regions = {
         'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
@@ -113,9 +128,11 @@ class Region:
         'CostaBlanca': {'Lat': 38.504384, 'Long': -0.264345},
         'CostaBrava': {'Lat': 42.275527, 'Long': 3.017571},
         'CotedAzur': {'Lat': 43.120359, 'Long': 6.920913},
+        'Cyprus': {'Lat': 35.126413, 'Long': 33.429859},
         'Crete': {'Lat': 35.240117, 'Long': 24.809269},
         'Czechia': {'Lat': 49.817492, 'Long': 15.472962},
         'Denmark': {'Lat': 56.26392, 'Long': 9.501785},
+        'Dolomites': {'Lat': 46.410212, 'Long': 11.844035},
         'Egypt': {'Lat': 26.820553, 'Long': 30.802498},
         'England': {'Lat': 52.355518, 'Long': -1.17432},
         'ErzGebirge': {'Lat': 50.58, 'Long': 13},
@@ -129,16 +146,20 @@ class Region:
         'Ibiza': {'Lat': 38.906734, 'Long': 1.420598},
         'Ireland': {'Lat': 53.41291, 'Long': -8.24389},
         'LakeGarda': {'Lat': 45.604939, 'Long': 10.635141},
+        'Lanzarote': {'Lat': 29.046854, 'Long': -13.589973},
         'Lolland': {'Lat': 54.727543, 'Long': 11.46493},
+        'LowerAustria': {'Lat': 48.108077, 'Long': 15.804956},
         'Madeira': {'Lat': 32.760707, 'Long': -16.959472},
         'Mallorca': {'Lat': 39.695263, 'Long': 3.017571},
         'Malta': {'Lat': 35.937496, 'Long': 14.375416},
+        'Morocco': {'Lat': 31.791702, 'Long': -7.09262},
         'Normandy': {'Lat': 48.87987, 'Long': 0.171253},
         'NorthSea': {'Lat': 56.511018, 'Long': 3.515625},
         'Poland': {'Lat': 51.919438, 'Long': 19.145136},
         'Rhodes': {'Lat': 36.434963, 'Long': 28.217483},
         'Riviera': {'Lat': 44.497152, 'Long': 8.953436},
         'SalzbergerLand': {'Lat': 47.80949, 'Long': 13.05501},
+        'Salzkammergut': {'Lat': 47.7, 'Long': 13.58},
         'Scotland': {'Lat': 56.490671, 'Long': -4.202646},
         'Slowakei': {'Lat': 48.669026, 'Long': 19.699024},
         'Styria': {'Lat': 47.359344, 'Long': 14.469983},
@@ -173,7 +194,7 @@ class Region:
 
 
 class Season:
-    weight = 1
+    weight = 4
     seasons = {
         'January': ['Winter', 'Winter'],
         'February': ['Spring', 'Winter'],
@@ -198,7 +219,7 @@ class Season:
 
 
 class Transportation:
-    weight = 1
+    weight = 4
     similarities = {
         'Car': [1, 0.5, 0.0, 0.8],
         'Coach': [0.5, 1.0, 0.0, 0.7],
@@ -221,7 +242,7 @@ class TargetCase:
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None):
         self.case = case
-        self.journey_code = journey_code
+        self.journey_code = JourneyCode(journey_code)
         self.holiday_type = HolidayType(holiday_type)
         self.price = Price(price, number_of_persons)
         self.number_of_persons = NumberOfPersons(number_of_persons)
@@ -230,7 +251,78 @@ class TargetCase:
         self.duration = Duration(duration)
         self.season = Season(season)
         self.accommodation = Accommodation(accommodation)
-        self.hotel = hotel
+        self.hotel = Hotel(hotel)
+
+    def set_journey_code(self, journey_code):
+        self.journey_code = JourneyCode(journey_code)
+
+    def get_journey_code(self):
+        return self.journey_code
+
+    def set_holiday_type(self, holiday_type):
+        self.holiday_type = HolidayType(holiday_type)
+
+    def get_holiday_type(self):
+        return self.holiday_type
+
+    def set_price(self, price):
+        self.price = Price(price)
+
+    def get_price(self):
+        return self.price
+
+    def set_number_of_persons(self, number_of_persons):
+        self.number_of_persons = NumberOfPersons(number_of_persons)
+
+    def get_number_of_persons(self):
+        return self.number_of_persons
+
+    def set_region(self, region):
+        self.region = Region(region)
+
+    def get_region(self):
+        return self.region
+
+    def set_transportation(self, transportation):
+        self.transportation = Transportation(transportation)
+
+    def get_transportation(self):
+        return self.transportation
+
+    def set_duration(self, duration):
+        self.duration = Duration(duration)
+
+    def get_duration(self):
+        return self.duration
+
+    def set_season(self, season):
+        self.season = Season(season)
+
+    def get_season(self):
+        return self.season
+
+    def set_accommodation(self, accommodation):
+        self.accommodation = Accommodation(accommodation)
+
+    def get_accommodation(self):
+        return self.accommodation
+
+    def set_hotel(self, hotel):
+        self.hotel = Hotel(hotel)
+
+    def get_hotel(self):
+        return self.hotel
+
+    jc = property(get_journey_code, set_journey_code)
+    ht = property(get_holiday_type, set_holiday_type)
+    p = property(get_price, set_price)
+    nop = property(get_number_of_persons, set_number_of_persons)
+    r = property(get_region, set_region)
+    t = property(get_transportation, set_transportation)
+    d = property(get_duration, set_duration)
+    s = property(get_season, set_season)
+    a = property(get_accommodation, set_accommodation)
+    h = property(get_hotel, set_hotel)
 
 
 class JourneyCase:
@@ -276,7 +368,7 @@ class JourneyCase:
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
         self.case = case
-        self.journey_code = journey_code
+        self.journey_code = JourneyCode(journey_code)
         self.holiday_type = HolidayType(holiday_type)
         self.price = Price(price, number_of_persons)
         self.number_of_persons = NumberOfPersons(number_of_persons)
@@ -285,7 +377,7 @@ class JourneyCase:
         self.duration = Duration(duration)
         self.season = Season(season)
         self.accommodation = Accommodation(accommodation)
-        self.hotel = hotel
+        self.hotel = Hotel(hotel)
         self.target_case = target_case
         self.similarity()
 
@@ -312,6 +404,22 @@ class JourneyCase:
         if self.target_case.holiday_type.name is not None:
             weight = self.holiday_type.weight
             sim_int += self.holiday_type_sim() * weight
+            total_weight += weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Hotel
+        if self.target_case.hotel.name is not None:
+            weight = self.hotel.weight
+            sim_int += self.hotel_sim() * weight
+            total_weight += weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Journey code
+        if self.target_case.journey_code.number is not None:
+            weight = self.journey_code.weight
+            sim_int += self.journey_code_sim() * weight
             total_weight += weight
         else:
             sim_int += 1
@@ -383,6 +491,18 @@ class JourneyCase:
         else:
             return 0.3
 
+    def hotel_sim(self):
+        if self.hotel.name == self.target_case.hotel.name:
+            return 1
+        else:
+            return 0
+
+    def journey_code_sim(self):
+        if self.journey_code.number == self.target_case.journey_code.number:
+            return 1
+        else:
+            return 0
+
     def number_of_persons_sim(self):
         if self.number_of_persons.total == self.target_case.number_of_persons.total:
             return 1
@@ -428,7 +548,62 @@ class JourneyCase:
         return self.target_case.transportation.similarity[self.transportation.similarity.index(1.0)]
 
 
-def load_cases(sheet, target_case):
+def load_cases_ascii(file_name, target_case):
+    f = open(file_name, 'r')
+    cases = {}
+    for line in f.readlines():
+        line = line.strip()
+        columns = line.split()
+        line_length = len(columns)
+        if line_length >= 1:
+            name = columns[0]
+            if name == 'defcase':
+                cases[columns[1]] = []
+                defcase = columns[1]
+            elif name == 'case':
+                cases[defcase].append(columns[1])
+            elif name == 'JourneyCode:':
+                cases[defcase].append(columns[1])
+            elif name == 'HolidayType:':
+                cases[defcase].append(columns[1].replace(',', ''))
+            elif name == 'Price:':
+                cases[defcase].append(columns[1])
+            elif name == 'NumberOfPersons:':
+                cases[defcase].append(columns[1])
+            elif name == 'Region:':
+                cases[defcase].append(columns[1].replace(',', ''))
+            elif name == 'Transportation:':
+                cases[defcase].append(columns[1].replace(',', ''))
+            elif name == 'Duration:':
+                cases[defcase].append(columns[1])
+            elif name == 'Season:':
+                cases[defcase].append(columns[1].replace(',', ''))
+            elif name == 'Accommodation:':
+                cases[defcase].append(columns[1].replace(',', ''))
+            elif name == 'Hotel:':
+                number_of_columns = 1
+                hotel_name = ''
+                while number_of_columns < line_length:
+                    hotel_name += columns[number_of_columns] + ' '
+                    number_of_columns += 1
+                cases[defcase].append(hotel_name.replace('"', '')[:-1])
+            else:
+                pass
+    f.close()
+    # return cases
+    for key in cases:
+        case = cases[key]
+        JourneyCase.create(
+            case[0], case[1], case[2], int(case[3]),
+            int(case[4]), case[5], case[6], int(case[7]),
+            case[8], case[9], case[10], target_case)
+
+
+def load_cases_excel(file_name, target_case):
+    wb = openpyxl.load_workbook(file_name)
+    sheet_names = wb.get_sheet_names()
+    sheet_name = sheet_names[0]
+    sheet = wb.get_sheet_by_name(sheet_name)
     case_column = 3
     case_row = 1
     is_case = True
