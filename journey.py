@@ -1,12 +1,13 @@
 #!/usr/local/bin/python3.5
 
 # import modules used here -- sys is a very standard one
-import sys
+# import sys
 # import platform
 import openpyxl
 import operator
 import time
 from geopy.geocoders import Nominatim
+from geopy.distance import great_circle
 # import re
 # from time import sleep
 
@@ -24,17 +25,18 @@ def main():
         price=500,
         duration=21,
         number_of_persons=4,
-        region='Auckland'
+        region='Sweden',
+        transportation='Train',
+        season='June'
     )
     load_cases(sheet, target_case)
     start_time = time.time()
-    print(JourneyCase.similarities()[0][0].region.regions['Auckland'])
+    print(JourneyCase.similarities()[0][0].journey_code)
     print("--- %s seconds ---" % (time.time() - start_time))
     # print(JourneyCase.similarities()[0][0].region.list_regions())
-    # a = [1, 2, 3]
+    # a = [7.0, 2, 3]
     # b = [2, 4, 7, 1]
     # print(sorted(set(a).intersection(b)))
-    print(sys.version)
 
 
 class Accommodation:
@@ -87,6 +89,7 @@ class Price:
 
 class Region:
     weight = 1
+    distance = 2000
     regions = {
         'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
         'Algarve': {'Lat': 37.2454248, 'Long': -8.15092517307923},
@@ -154,7 +157,7 @@ class Region:
         if region is not None:
             if region not in self.regions:
                 self.regions[region] = {'Long': '', 'Lat': ''}
-                geolocator = Nominatim()  # TODO: must learn how to use timeout() or catch and do multiple calls
+                geolocator = Nominatim()  # TODO: must learn how to use timeout() or catch error and do multiple calls
                 location = geolocator.geocode(region)
                 if location.longitude is not None:
                     self.regions[region]['Long'] = location.longitude
@@ -169,6 +172,48 @@ class Region:
         return {}.fromkeys(cls.regions).keys()
 
 
+class Season:
+    weight = 1
+    seasons = {
+        'January': ['Winter', 'Winter'],
+        'February': ['Spring', 'Winter'],
+        'March': ['Winter', 'Spring'],
+        'April': ['Spring', 'Spring'],
+        'May': ['Summer', 'Spring'],
+        'June': ['Spring', 'Summer'],
+        'July': ['Summer', 'Summer'],
+        'August': ['Autumn', 'Summer'],
+        'September': ['Summer', 'Autumn'],
+        'October': ['Autumn', 'Autumn'],
+        'November': ['Winter', 'Autumn'],
+        'December': ['Autumn', 'Winter']
+    }
+
+    def __init__(self, season=None):
+        self.month = season
+        if season is not None:
+            self.name = self.seasons[season]
+        else:
+            self.name = None
+
+
+class Transportation:
+    weight = 1
+    similarities = {
+        'Car': [1, 0.5, 0.0, 0.8],
+        'Coach': [0.5, 1.0, 0.0, 0.7],
+        'Plane': [0.0, 0.0, 1.0, 0.0],
+        'Train': [0.3, 0.7, 0.0, 1.0]
+    }
+
+    def __init__(self, transportation=None):
+        self.name = transportation
+        if transportation is not None:
+            self.similarity = self.similarities[transportation]
+        else:
+            self.similarity = None
+
+
 class TargetCase:
 
     def __init__(
@@ -181,9 +226,9 @@ class TargetCase:
         self.price = Price(price, number_of_persons)
         self.number_of_persons = NumberOfPersons(number_of_persons)
         self.region = Region(region)
-        self.transportation = transportation
+        self.transportation = Transportation(transportation)
         self.duration = Duration(duration)
-        self.season = season
+        self.season = Season(season)
         self.accommodation = Accommodation(accommodation)
         self.hotel = hotel
 
@@ -197,12 +242,7 @@ class JourneyCase:
     prices_dict = {}
     persons_per_case = []
     price_range = [279, 7161]
-    # target_price = 0
-    # transportations = {}
     durations = []
-    # seasons = {}
-    # accommodations = {}
-    # hotels = {}
 
     @classmethod
     def create(
@@ -220,14 +260,8 @@ class JourneyCase:
         cls.holiday_types[instance.holiday_type].append(instance)
         cls.prices[instance] = instance.price.total
         cls.persons_per_case.append(instance.number_of_persons.total)
-        # cls.holiday_list.append(instance.holiday_type)
-        # cls.target_price = instance.target_case.price
-        # cls.transportations[transportation] = instance
         if instance.duration.days not in cls.durations:
             cls.durations.append(instance.duration.days)
-        # cls.seasons[season] = instance
-        # cls.accommodations[accommodation] = instance
-        # cls.hotels[hotel] = instance
         return instance
 
     @classmethod
@@ -247,9 +281,9 @@ class JourneyCase:
         self.price = Price(price, number_of_persons)
         self.number_of_persons = NumberOfPersons(number_of_persons)
         self.region = Region(region)
-        self.transportation = transportation
+        self.transportation = Transportation(transportation)
         self.duration = Duration(duration)
-        self.season = season
+        self.season = Season(season)
         self.accommodation = Accommodation(accommodation)
         self.hotel = hotel
         self.target_case = target_case
@@ -260,36 +294,65 @@ class JourneyCase:
         total_weight = 0
         # Accommodation
         if self.target_case.accommodation.name is not None:
-            sim_int += self.accommodation_sim()
-            total_weight += self.target_case.accommodation.weight
+            weight = self.accommodation.weight
+            sim_int += self.accommodation_sim() * weight
+            total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Duration
         if self.target_case.duration.days is not None:
-            sim_int += self.duration_sim()
-            total_weight += self.duration.weight
+            weight = self.duration.weight
+            sim_int += self.duration_sim() * weight
+            total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Holiday type
         if self.target_case.holiday_type.name is not None:
-            sim_int += self.holiday_type_sim()
-            total_weight += self.holiday_type.weight
+            weight = self.holiday_type.weight
+            sim_int += self.holiday_type_sim() * weight
+            total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Number of persons
         if self.target_case.number_of_persons.total is not None:
-            sim_int += self.number_of_persons_sim()
-            total_weight += self.number_of_persons.weight
+            weight = self.number_of_persons.weight
+            sim_int += self.number_of_persons_sim() * weight
+            total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Price
         if self.target_case.price.total is not None:
-            sim_int += self.price_sim()
+            weight = self.price.weight
+            sim_int += self.price_sim() * weight
+            total_weight += weight
+        else:
+            sim_int += 1
             total_weight += 1
+        # Region
+        if self.target_case.region.name is not None:
+            weight = self.region.weight
+            sim_int += self.region_sim() * weight
+            total_weight += weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Season
+        if self.target_case.season.name is not None:
+            weight = self.season.weight
+            sim_int += self.season_sim() * weight
+            total_weight += weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Transportation
+        if self.target_case.transportation.similarity is not None:
+            weight = self.transportation.weight
+            sim_int += self.transportation_sim() * weight
+            total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
@@ -334,6 +397,36 @@ class JourneyCase:
         else:
             return (self.price_range[1] - self.price.total) / (self.price_range[1] - self.price_range[0])
 
+    def region_sim(self):
+        if self.region.name == self.target_case.region.name:
+            return 1
+        elif self.target_case.region.coordinates is not None:
+            target = (self.target_case.region.coordinates['Lat'], self.target_case.region.coordinates['Long'])
+            source = (self.region.coordinates['Lat'], self.region.coordinates['Long'])
+            distance = great_circle(target, source).kilometers
+            if distance > self.region.distance:
+                return 0
+            else:
+                lat_distance = great_circle((target[0], 0), (source[0], 0)).kilometers
+                latitude_sim = (self.region.distance-lat_distance)/self.region.distance
+                distance_sim = (self.region.distance-distance)/self.region.distance
+                return (distance_sim + (2 * latitude_sim))/3
+        else:
+            return 0
+
+    def season_sim(self):
+        if self.season.month == self.target_case.season.month:
+            return 1
+        elif self.season.name[1] == self.target_case.season.name[1]:
+            return 0.5
+        elif self.season.name[0] == self.target_case.season.name[0]:
+            return 0.2
+        else:
+            return 0
+
+    def transportation_sim(self):
+        return self.target_case.transportation.similarity[self.transportation.similarity.index(1.0)]
+
 
 def load_cases(sheet, target_case):
     case_column = 3
@@ -349,8 +442,8 @@ def load_cases(sheet, target_case):
                 case[next_cell-2] = sheet.cell(row=case_row + next_cell, column=3).value
             JourneyCase.create(
                 case[0], case[1], case[2].replace(',', ''), case[3],
-                case[4], case[5].replace(',', ''), case[6], case[7],
-                case[8], case[9].replace(',', ''), case[10], target_case)
+                case[4], case[5].replace(',', ''), case[6].replace(',', ''), case[7],
+                case[8].replace(',', ''), case[9].replace(',', ''), case[10], target_case)
         case_row += 16
 
 
