@@ -8,10 +8,12 @@ import operator
 import time
 from geopy.geocoders import Nominatim
 from geopy.distance import great_circle
+import psycopg2
 # import magic
 # import numpy as np
 # import re
 # from time import sleep
+import types
 
 # Gather our code in a main() function
 
@@ -29,15 +31,23 @@ def main():
         # hotel='H.Flat Les Olympiades, France.'
         # journey_code='134'
     )
-    # start_time = time.time()
-    # load_cases_excel('TRAVEL.xlsx', target_case)
-    # print("--- %s seconds ---" % (time.time() - start_time))
     target_case.ht = 'Recreation'
     target_case.nop = 2
     start_time = time.time()
-    load_cases_ascii('reise.cases', target_case)
+    # cases = get_cases_ascii('reise.cases')
+    # instance_cases(cases, target_case)
+    # case = JourneyCase.similarities()[0][0]
+    # new_cases = [case]
+    # add_cases_to_database(new_cases)
+    conn = psycopg2.connect("dbname='travel'")
+    cur = conn.cursor()
+    cur.execute("SELECT * from cases")
+    cases = cur.fetchall()
+    # print(type(cases))
+    instance_cases(cases, target_case)
     print("--- %s seconds ---" % (time.time() - start_time))
     print(JourneyCase.similarities()[0][0].journey_code.number)
+    print(target_case.region.coordinates)
 
 
 class Accommodation:
@@ -367,7 +377,7 @@ class TargetCase:
 
 class JourneyCase:
     cases = {}
-    journey_codes = {}
+    max_code = 0
     holiday_types = {}
     holiday_list = []
     prices = {}
@@ -386,7 +396,8 @@ class JourneyCase:
             price, number_of_persons, region, transportation,
             duration, season, accommodation, hotel, target_case)
         cls.cases[instance] = instance
-        cls.journey_codes[journey_code] = instance
+        if cls.max_code < int(instance.journey_code.number):
+            cls.max_code = int(instance.journey_code.number)
         if instance.holiday_type not in cls.holiday_types:
             cls.holiday_types[instance.holiday_type] = []
         cls.holiday_types[instance.holiday_type].append(instance)
@@ -588,7 +599,7 @@ class JourneyCase:
         return self.target_case.transportation.similarity[self.transportation.similarity.index(1.0)]
 
 
-def load_cases_ascii(file_name, target_case):
+def get_cases_ascii(file_name):
     f = open(file_name, 'r')
     cases = {}
     for line in f.readlines():
@@ -630,13 +641,16 @@ def load_cases_ascii(file_name, target_case):
             else:
                 pass
     f.close()
-    # return cases
-    for key in cases:
-        case = cases[key]
+    return cases
+
+
+def instance_cases(cases, target_case):
+    for case in cases:
+        case = list(case)
         JourneyCase.create(
-            case[0], case[1], case[2], int(case[3]),
-            int(case[4]), case[5], case[6], int(case[7]),
-            case[8], case[9], case[10], target_case)
+            case[1], case[0], case[3], int(case[4]),
+            int(case[5]), case[6], case[7], int(case[8]),
+            case[9], case[10], case[11], target_case)
 
 
 def load_cases_excel(file_name, target_case):
@@ -660,6 +674,101 @@ def load_cases_excel(file_name, target_case):
                 case[4], case[5].replace(',', ''), case[6].replace(',', ''), case[7],
                 case[8].replace(',', ''), case[9].replace(',', ''), case[10], target_case)
         case_row += 16
+
+
+def format_case_list_to_database(case):
+    new_case = ({
+        "id": case[1],
+        "case_name": case[0],
+        "journey_code": case[1],
+        "holiday_type": case[2],
+        "price": case[3],
+        "number_of_persons": case[4],
+        "region": case[5],
+        "transportation": case[6],
+        "duration": case[7],
+        "season": case[8],
+        "accommodation": case[9],
+        "hotel": case[10],
+    })
+    return new_case
+
+
+def format_case_instance_to_database(new_case):
+    case = ({
+        # "id": new_case.journey_code.number,
+        # "case_name": new_case.case,
+        # "journey_code": new_case.journey_code.number,
+        "id": 1471,
+        "case_name": 'JourneyCase1471',
+        "journey_code": 1471,
+        "holiday_type": new_case.holiday_type.name,
+        "price": new_case.price.total,
+        "number_of_persons": new_case.number_of_persons.total,
+        "region": new_case.region.name,
+        "transportation": new_case.transportation.name,
+        "duration": new_case.duration.days,
+        "season": new_case.season.month,
+        "accommodation": new_case.accommodation.name,
+        "hotel": new_case.hotel.name
+    })
+    return case
+
+
+def load_cases_to_database(cases):
+    counter = 1
+    list_cases = []
+    while counter <= len(cases):
+        string_counter = str(counter)
+        case = format_case_list_to_database(cases[string_counter])
+        list_cases.append(case)
+        counter += 1
+    tuple_cases = tuple(list_cases)
+    commit_to_database(tuple_cases)
+
+
+def add_cases_to_database(cases):
+    counter = 0
+    list_cases = []
+    while counter <= len(cases)-1:
+        # string_counter = str(counter)
+        case = format_case_instance_to_database(cases[counter])
+        list_cases.append(case)
+        counter += 1
+    tuple_cases = tuple(list_cases)
+    commit_to_database(tuple_cases)
+
+
+def commit_to_database(case):
+    conn = psycopg2.connect("dbname='travel'")
+    cur = conn.cursor()
+    cur.executemany(
+        "INSERT INTO cases("
+        "id,"
+        "case_name,"
+        "journey_code,"
+        "holiday_type,"
+        "price,"
+        "number_of_persons,"
+        "region,"
+        "transportation,"
+        "duration,"
+        "season,"
+        "accommodation,"
+        "hotel) "
+        "VALUES (%(id)s, "
+        "%(case_name)s, "
+        "%(journey_code)s, "
+        "%(holiday_type)s, "
+        "%(price)s, "
+        "%(number_of_persons)s, "
+        "%(region)s, "
+        "%(transportation)s, "
+        "%(duration)s, "
+        "%(season)s, "
+        "%(accommodation)s, "
+        "%(hotel)s)", case)
+    conn.commit()
 
 
 def count_cases(sheet):
