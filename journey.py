@@ -1,11 +1,14 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python3.5
 
 # import modules used here -- sys is a very standard one
-# import sys
+import sys
+# import platform
 import openpyxl
 import operator
 import time
-
+from geopy.geocoders import Nominatim
+# import re
+# from time import sleep
 
 # Gather our code in a main() function
 
@@ -15,28 +18,39 @@ def main():
     sheet_names = wb.get_sheet_names()
     sheet_name = sheet_names[0]
     sheet = wb.get_sheet_by_name(sheet_name)
-    target_case = TargetCase(holiday_type='Active', accommodation='FiveStars')
+    target_case = TargetCase(
+        holiday_type='Active',
+        accommodation='FiveStars',
+        price=500,
+        duration=21,
+        number_of_persons=4,
+        region='Auckland'
+    )
     load_cases(sheet, target_case)
-    target_case.price = 5000
-    # print(JourneyCase.similarities()[0])
-    target_case.price = 500
-    print(JourneyCase.similarities()[:10])
     start_time = time.time()
-    print(JourneyCase.similarities()[0][0].journey_code)
-    # holiday_type = HolidayType('Active')
-    # print(holiday_type.groups['Shopping,'])
-    # # print(JourneyCase.holiday_types['Active,'])
+    print(JourneyCase.similarities()[0][0].region.regions['Auckland'])
     print("--- %s seconds ---" % (time.time() - start_time))
-    # # print("{0:b}".format(0b1010001 & 0b1000001))
+    # print(JourneyCase.similarities()[0][0].region.list_regions())
+    # a = [1, 2, 3]
+    # b = [2, 4, 7, 1]
+    # print(sorted(set(a).intersection(b)))
+    print(sys.version)
 
 
 class Accommodation:
-    indices = {'HolidayFlat': 0, 'OneStar': 1, 'TwoStars': 2, 'ThreeStars': 3, 'FourStars': 4, 'FiveStars': 5}
+    indices = {'HolidayFlat': 1, 'OneStar': 2, 'TwoStars': 3, 'ThreeStars': 4, 'FourStars': 5, 'FiveStars': 6}
     weight = 1
 
     def __init__(self, accommodation=None):
         self.name = accommodation
         self.index = self.indices.get(accommodation)
+
+
+class Duration:
+    weight = 1
+
+    def __init__(self, duration=None):
+        self.days = duration
 
 
 class HolidayType:
@@ -53,6 +67,108 @@ class HolidayType:
         self.group = self.groups.get(holiday_type)
 
 
+class NumberOfPersons:
+    weight = 1
+
+    def __init__(self, number_of_persons=None):
+        self.total = number_of_persons
+
+
+class Price:
+    weight = 1
+
+    def __init__(self, price=None, number_of_persons=None):
+        self.total = price
+        if number_of_persons is not None:
+            self.per_person = price/number_of_persons
+        else:
+            self.per_person = None
+
+
+class Region:
+    weight = 1
+    regions = {
+        'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
+        'Algarve': {'Lat': 37.2454248, 'Long': -8.15092517307923},
+        'Allgaeu': {'Lat': 47.7852787, 'Long': 11.6243293},
+        'Alps': {'Lat': 46.887619, 'Long': 9.6569996},
+        'Atlantic': {'Lat': 46.513516, 'Long': -1.7358398},
+        'Attica': {'Lat': 40.294204, 'Long': -87.248899},
+        'Balaton': {'Lat': 46.830268, 'Long': 17.734044},
+        'BalticSea': {'Lat': 58.487952, 'Long': 19.863281},
+        'Bavaria': {'Lat': 48.790447, 'Long': 11.497889},
+        'Belgium': {'Lat': 50.503887, 'Long': 4.469936},
+        'BlackForest': {'Lat': 47.841544, 'Long': 7.960641},
+        'Bornholm': {'Lat': 55.160428, 'Long': 14.866884},
+        'Brittany': {'Lat': 48.202047, 'Long': -2.932644},
+        'Bulgaria': {'Lat': 42.733883, 'Long': 25.48583},
+        'Cairo': {'Lat': 30.04442, 'Long': 31.235712},
+        'Carinthia': {'Lat': 46.722203, 'Long': 14.180588},
+        'Chalkidiki': {'Lat': 40.3695, 'Long': 23.287085},
+        'Corfu': {'Lat': 39.624262, 'Long': 19.921678},
+        'Corsica': {'Lat': 42.039604, 'Long': 9.012893},
+        'CostaBlanca': {'Lat': 38.504384, 'Long': -0.264345},
+        'CostaBrava': {'Lat': 42.275527, 'Long': 3.017571},
+        'CotedAzur': {'Lat': 43.120359, 'Long': 6.920913},
+        'Crete': {'Lat': 35.240117, 'Long': 24.809269},
+        'Czechia': {'Lat': 49.817492, 'Long': 15.472962},
+        'Denmark': {'Lat': 56.26392, 'Long': 9.501785},
+        'Egypt': {'Lat': 26.820553, 'Long': 30.802498},
+        'England': {'Lat': 52.355518, 'Long': -1.17432},
+        'ErzGebirge': {'Lat': 50.58, 'Long': 13},
+        'Fano': {'Lat': 43.839816, 'Long': 13.01942},
+        'France': {'Lat': 46.227638, 'Long': 2.213749},
+        'Fuerteventura': {'Lat': 28.358744, 'Long': -14.053676},
+        'GiantMountains': {'Lat': 50.767222, 'Long': 15.622222},
+        'GranCanaria': {'Lat': 27.92022, 'Long': -15.547437},
+        'Harz': {'Lat': 51.809525, 'Long': 10.238361},
+        'Holland': {'Lat': 52.132633, 'Long': 5.291266},
+        'Ibiza': {'Lat': 38.906734, 'Long': 1.420598},
+        'Ireland': {'Lat': 53.41291, 'Long': -8.24389},
+        'LakeGarda': {'Lat': 45.604939, 'Long': 10.635141},
+        'Lolland': {'Lat': 54.727543, 'Long': 11.46493},
+        'Madeira': {'Lat': 32.760707, 'Long': -16.959472},
+        'Mallorca': {'Lat': 39.695263, 'Long': 3.017571},
+        'Malta': {'Lat': 35.937496, 'Long': 14.375416},
+        'Normandy': {'Lat': 48.87987, 'Long': 0.171253},
+        'NorthSea': {'Lat': 56.511018, 'Long': 3.515625},
+        'Poland': {'Lat': 51.919438, 'Long': 19.145136},
+        'Rhodes': {'Lat': 36.434963, 'Long': 28.217483},
+        'Riviera': {'Lat': 44.497152, 'Long': 8.953436},
+        'SalzbergerLand': {'Lat': 47.80949, 'Long': 13.05501},
+        'Scotland': {'Lat': 56.490671, 'Long': -4.202646},
+        'Slowakei': {'Lat': 48.669026, 'Long': 19.699024},
+        'Styria': {'Lat': 47.359344, 'Long': 14.469983},
+        'Sweden': {'Lat': 60.128161, 'Long': 18.643501},
+        'Teneriffe': {'Lat': 28.291564, 'Long': -16.62913},
+        'Thuringia': {'Lat': 51.010989, 'Long': 10.845346},
+        'Tunisia': {'Lat': 33.886917, 'Long': 9.537499},
+        'TurkishAegeanSea': {'Lat': 39.050428, 'Long': 23.429984},
+        'TurkishRiviera': {'Lat': 37.002553, 'Long': 28.015137},
+        'Tyrol': {'Lat': 47.253741, 'Long': 11.601487},
+        'Wales': {'Lat': 52.130661, 'Long': -3.783712}
+    }
+
+    def __init__(self, region=None):
+        self.name = region
+        if region is not None:
+            if region not in self.regions:
+                self.regions[region] = {'Long': '', 'Lat': ''}
+                geolocator = Nominatim()  # TODO: must learn how to use timeout() or catch and do multiple calls
+                location = geolocator.geocode(region)
+                if location.longitude is not None:
+                    self.regions[region]['Long'] = location.longitude
+                if location.latitude is not None:
+                    self.regions[region]['Lat'] = location.latitude
+            self.coordinates = self.regions[region]
+        else:
+            self.coordinates = None
+
+    @classmethod
+    def list_regions(cls):
+        return {}.fromkeys(cls.regions).keys()
+
+
 class TargetCase:
 
     def __init__(
@@ -62,11 +178,11 @@ class TargetCase:
         self.case = case
         self.journey_code = journey_code
         self.holiday_type = HolidayType(holiday_type)
-        self.price = price
-        self.number_of_persons = number_of_persons
-        self.region = region
+        self.price = Price(price, number_of_persons)
+        self.number_of_persons = NumberOfPersons(number_of_persons)
+        self.region = Region(region)
         self.transportation = transportation
-        self.duration = duration
+        self.duration = Duration(duration)
         self.season = season
         self.accommodation = Accommodation(accommodation)
         self.hotel = hotel
@@ -80,7 +196,6 @@ class JourneyCase:
     prices = {}
     prices_dict = {}
     persons_per_case = []
-    regions = {}
     price_range = [279, 7161]
     # target_price = 0
     # transportations = {}
@@ -103,13 +218,13 @@ class JourneyCase:
         if instance.holiday_type not in cls.holiday_types:
             cls.holiday_types[instance.holiday_type] = []
         cls.holiday_types[instance.holiday_type].append(instance)
-        cls.prices[instance] = instance.price
-        cls.persons_per_case.append(instance.number_of_persons)
+        cls.prices[instance] = instance.price.total
+        cls.persons_per_case.append(instance.number_of_persons.total)
         # cls.holiday_list.append(instance.holiday_type)
-        cls.regions[region] = instance
         # cls.target_price = instance.target_case.price
         # cls.transportations[transportation] = instance
-        cls.durations.append(duration)
+        if instance.duration.days not in cls.durations:
+            cls.durations.append(instance.duration.days)
         # cls.seasons[season] = instance
         # cls.accommodations[accommodation] = instance
         # cls.hotels[hotel] = instance
@@ -129,11 +244,11 @@ class JourneyCase:
         self.case = case
         self.journey_code = journey_code
         self.holiday_type = HolidayType(holiday_type)
-        self.price = price
-        self.number_of_persons = number_of_persons
-        self.region = region
+        self.price = Price(price, number_of_persons)
+        self.number_of_persons = NumberOfPersons(number_of_persons)
+        self.region = Region(region)
         self.transportation = transportation
-        self.duration = duration
+        self.duration = Duration(duration)
         self.season = season
         self.accommodation = Accommodation(accommodation)
         self.hotel = hotel
@@ -143,31 +258,56 @@ class JourneyCase:
     def similarity(self):
         sim_int = 0
         total_weight = 0
-        if self.target_case.price is not None:
-            sim_int += self.price_sim()
-            total_weight += 1
-        else:
-            sim_int += 1
-            total_weight += 1
-        if self.target_case.holiday_type.name is not None:
-            sim_int += self.holiday_type_sim()
-            total_weight += self.holiday_type.weight
-        else:
-            sim_int += 1
-            total_weight += 1
+        # Accommodation
         if self.target_case.accommodation.name is not None:
             sim_int += self.accommodation_sim()
             total_weight += self.target_case.accommodation.weight
         else:
             sim_int += 1
             total_weight += 1
+        # Duration
+        if self.target_case.duration.days is not None:
+            sim_int += self.duration_sim()
+            total_weight += self.duration.weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Holiday type
+        if self.target_case.holiday_type.name is not None:
+            sim_int += self.holiday_type_sim()
+            total_weight += self.holiday_type.weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Number of persons
+        if self.target_case.number_of_persons.total is not None:
+            sim_int += self.number_of_persons_sim()
+            total_weight += self.number_of_persons.weight
+        else:
+            sim_int += 1
+            total_weight += 1
+        # Price
+        if self.target_case.price.total is not None:
+            sim_int += self.price_sim()
+            total_weight += 1
+        else:
+            sim_int += 1
+            total_weight += 1
         return sim_int/total_weight
 
-    def price_sim(self):
-        if self.price <= self.target_case.price:
+    def accommodation_sim(self):
+        if self.accommodation.index >= self.target_case.accommodation.index:
             return 1
         else:
-            return (self.price_range[1] - self.price)/(self.price_range[1] - self.price_range[0])
+            return self.accommodation.index/self.target_case.accommodation.index
+
+    def duration_sim(self):
+        if self.duration.days == self.target_case.duration.days:
+            return 1
+        elif abs(self.duration.days - self.target_case.duration.days) <= 4:
+            return (5 - abs(self.duration.days - self.target_case.duration.days))/5
+        else:
+            return 0
 
     def holiday_type_sim(self):
         if self.holiday_type.group == self.target_case.holiday_type.group:
@@ -180,11 +320,19 @@ class JourneyCase:
         else:
             return 0.3
 
-    def accommodation_sim(self):
-        if self.accommodation.index >= self.target_case.accommodation.index:
+    def number_of_persons_sim(self):
+        if self.number_of_persons.total == self.target_case.number_of_persons.total:
+            return 1
+        elif abs(self.number_of_persons.total - self.target_case.number_of_persons.total) < 2:
+            return 0.5
+        else:
+            return 0
+
+    def price_sim(self):
+        if self.price.total <= self.target_case.price.total:
             return 1
         else:
-            return self.accommodation.index/self.target_case.accommodation.index
+            return (self.price_range[1] - self.price.total) / (self.price_range[1] - self.price_range[0])
 
 
 def load_cases(sheet, target_case):
@@ -201,7 +349,7 @@ def load_cases(sheet, target_case):
                 case[next_cell-2] = sheet.cell(row=case_row + next_cell, column=3).value
             JourneyCase.create(
                 case[0], case[1], case[2].replace(',', ''), case[3],
-                case[4], case[5], case[6], case[7],
+                case[4], case[5].replace(',', ''), case[6], case[7],
                 case[8], case[9].replace(',', ''), case[10], target_case)
         case_row += 16
 
