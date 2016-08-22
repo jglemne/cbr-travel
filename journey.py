@@ -241,88 +241,128 @@ class TargetCase:
             self, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None):
+        self.accommodation = Accommodation(accommodation)
         self.case = case
-        self.journey_code = JourneyCode(journey_code)
-        self.holiday_type = HolidayType(holiday_type)
-        self.price = Price(price, number_of_persons)
-        self.number_of_persons = NumberOfPersons(number_of_persons)
-        self.region = Region(region)
-        self.transportation = Transportation(transportation)
         self.duration = Duration(duration)
-        self.season = Season(season)
-        self.accommodation = Accommodation(accommodation)
+        self.holiday_type = HolidayType(holiday_type)
         self.hotel = Hotel(hotel)
-
-    def set_journey_code(self, journey_code):
         self.journey_code = JourneyCode(journey_code)
-
-    def get_journey_code(self):
-        return self.journey_code
-
-    def set_holiday_type(self, holiday_type):
-        self.holiday_type = HolidayType(holiday_type)
-
-    def get_holiday_type(self):
-        return self.holiday_type
-
-    def set_price(self, price):
-        self.price = Price(price)
-
-    def get_price(self):
-        return self.price
-
-    def set_number_of_persons(self, number_of_persons):
         self.number_of_persons = NumberOfPersons(number_of_persons)
-
-    def get_number_of_persons(self):
-        return self.number_of_persons
-
-    def set_region(self, region):
+        self.price = Price(price, number_of_persons)
         self.region = Region(region)
-
-    def get_region(self):
-        return self.region
-
-    def set_transportation(self, transportation):
-        self.transportation = Transportation(transportation)
-
-    def get_transportation(self):
-        return self.transportation
-
-    def set_duration(self, duration):
-        self.duration = Duration(duration)
-
-    def get_duration(self):
-        return self.duration
-
-    def set_season(self, season):
         self.season = Season(season)
-
-    def get_season(self):
-        return self.season
-
-    def set_accommodation(self, accommodation):
-        self.accommodation = Accommodation(accommodation)
+        self.transportation = Transportation(transportation)
 
     def get_accommodation(self):
         return self.accommodation
 
-    def set_hotel(self, hotel):
-        self.hotel = Hotel(hotel)
+    def set_accommodation(self, accommodation):
+        self.accommodation = Accommodation(accommodation)
+
+    def del_accommodation(self):
+        del self.accommodation
+
+    def get_case(self):
+        return self.case
+
+    def set_case(self, case):
+        self.case = case
+
+    def del_case(self):
+        del self.case
+
+    def get_duration(self):
+        return self.duration
+
+    def set_duration(self, duration):
+        self.duration = Duration(duration)
+
+    def del_duration(self):
+        del self.duration
+
+    def get_holiday_type(self):
+        return self.holiday_type
+
+    def set_holiday_type(self, holiday_type):
+        self.holiday_type = HolidayType(holiday_type)
+
+    def del_holiday_type(self):
+        del self.holiday_type
 
     def get_hotel(self):
         return self.hotel
 
-    jc = property(get_journey_code, set_journey_code)
-    ht = property(get_holiday_type, set_holiday_type)
-    p = property(get_price, set_price)
-    nop = property(get_number_of_persons, set_number_of_persons)
-    r = property(get_region, set_region)
-    t = property(get_transportation, set_transportation)
-    d = property(get_duration, set_duration)
-    s = property(get_season, set_season)
-    a = property(get_accommodation, set_accommodation)
-    h = property(get_hotel, set_hotel)
+    def set_hotel(self, hotel):
+        self.hotel = Hotel(hotel)
+
+    def del_hotel(self):
+        del self.hotel
+
+    def get_journey_code(self):
+        return self.journey_code
+
+    def set_journey_code(self, journey_code):
+        self.journey_code = JourneyCode(journey_code)
+
+    def del_journey_code(self):
+        del self.journey_code
+
+    def get_number_of_persons(self):
+        return self.number_of_persons
+
+    def set_number_of_persons(self, number_of_persons):
+        self.number_of_persons = NumberOfPersons(number_of_persons)
+
+    def del_number_of_persons(self):
+        del self.number_of_persons
+
+    def get_price(self):
+        return self.price
+
+    def set_price(self, price):
+        self.price = Price(price)
+
+    def del_price(self):
+        del self.price
+
+    def get_region(self):
+        return self.region
+
+    def set_region(self, region):
+        self.region = Region(region)
+
+    def del_region(self):
+        del self.region
+
+    def get_season(self):
+        return self.season
+
+    def set_season(self, season):
+        self.season = Season(season)
+
+    def del_season(self):
+        del self.season
+
+    def get_transportation(self):
+        return self.transportation
+
+    def set_transportation(self, transportation):
+        self.transportation = Transportation(transportation)
+
+    def del_transportation(self):
+        del self.transportation
+
+    a = property(get_accommodation, set_accommodation, del_accommodation)
+    c = property(get_case, set_case, del_case)
+    d = property(get_duration, set_duration, del_duration)
+    ht = property(get_holiday_type, set_holiday_type, del_holiday_type)
+    h = property(get_hotel, set_hotel, del_hotel)
+    jc = property(get_journey_code, set_journey_code, del_journey_code)
+    nop = property(get_number_of_persons, set_number_of_persons, del_number_of_persons)
+    p = property(get_price, set_price, del_price)
+    r = property(get_region, set_region, del_region)
+    s = property(get_season, set_season, del_season)
+    t = property(get_transportation, set_transportation, del_transportation)
 
 
 class JourneyCase:
@@ -367,17 +407,17 @@ class JourneyCase:
             self, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
-        self.case = case
-        self.journey_code = JourneyCode(journey_code)
-        self.holiday_type = HolidayType(holiday_type)
-        self.price = Price(price, number_of_persons)
-        self.number_of_persons = NumberOfPersons(number_of_persons)
-        self.region = Region(region)
-        self.transportation = Transportation(transportation)
-        self.duration = Duration(duration)
-        self.season = Season(season)
         self.accommodation = Accommodation(accommodation)
+        self.case = case
+        self.duration = Duration(duration)
+        self.holiday_type = HolidayType(holiday_type)
         self.hotel = Hotel(hotel)
+        self.journey_code = JourneyCode(journey_code)
+        self.number_of_persons = NumberOfPersons(number_of_persons)
+        self.price = Price(price, number_of_persons)
+        self.region = Region(region)
+        self.season = Season(season)
+        self.transportation = Transportation(transportation)
         self.target_case = target_case
         self.similarity()
 
