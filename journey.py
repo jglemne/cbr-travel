@@ -10,9 +10,11 @@ from geopy.geocoders import Nominatim
 from geopy.distance import great_circle
 import psycopg2
 import tkinter as tk
+import tkinter.font as tkFont
+import tkinter.ttk as ttk
 # import magic
 # import numpy as np
-# import re
+import re
 # from time import sleep
 
 # Gather our code in a main() function
@@ -21,19 +23,58 @@ import tkinter as tk
 def main():
     target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
-    # root = tk.Tk()
-    # ListCases(root)
-    # scrollbar = tk.Scrollbar(root)
-    # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    #
-    # my_list = tk.Listbox(root, yscrollcommand=scrollbar.set)
-    # for line in range(100):
-    #     my_list.insert(tk.END, "This is line number " + str(line))
-    #
-    # my_list.pack(side=tk.LEFT, fill=tk.BOTH)
-    # scrollbar.config(command=my_list.yview)
-    # tk.mainloop()
     Interface(target_case).mainloop()
+    # root = tk.Tk()
+    # root.title("Multicolumn Treeview/Listbox")
+    # listbox = MultiColumnListbox()
+    # root.mainloop()
+
+
+class MultiColumnListbox():
+    """use a ttk.TreeView as a multicolumn ListBox"""
+
+    def __init__(self):
+        self.tree = None
+        self._setup_widgets()
+        self._build_tree()
+
+    def _setup_widgets(self):
+        s = "\click on header to sort by that column to change width of column drag boundary"
+        msg = ttk.Label(wraplength="4i", justify="left", anchor="n",
+                        padding=(10, 2, 10, 6), text=s)
+        msg.pack(fill='x')
+        container = ttk.Frame()
+        container.pack(fill='both', expand=True)
+        # container.grid(column=)
+        # create a treeview with dual scrollbars
+        self.tree = ttk.Treeview(columns=car_header, show="headings")
+        vsb = ttk.Scrollbar(orient="vertical",
+                            command=self.tree.yview)
+        hsb = ttk.Scrollbar(orient="horizontal",
+                            command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set,
+                            xscrollcommand=hsb.set)
+        self.tree.grid(column=0, row=0, sticky='nsew', in_=container)
+        vsb.grid(column=1, row=0, sticky='ns', in_=container)
+        hsb.grid(column=0, row=1, sticky='ew', in_=container)
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_rowconfigure(0, weight=1)
+
+    def _build_tree(self):
+        for col in car_header:
+            self.tree.heading(col, text=col.title(),
+                              command=lambda c=col: sortby(self.tree, c, 0))
+            # adjust the column's width to the header string
+            self.tree.column(col,
+                             width=tkFont.Font().measure(col.title()))
+
+        for item in car_list:
+            self.tree.insert('', 'end', values=item)
+            # adjust column's width if necessary to fit each value
+            for ix, val in enumerate(item):
+                col_w = tkFont.Font().measure(val)
+                if self.tree.column(car_header[ix], width=None) < col_w:
+                    self.tree.column(car_header[ix], width=col_w)
 
 
 class Field:
@@ -86,22 +127,25 @@ class DropDown:
 class ListCases:
 
     @classmethod
-    def create(cls, master):
-        instance = ListCases(master)
+    def create(cls, master, row, col):
+        instance = ListCases(master, row, col)
         return instance
 
-    def __init__(self, master):
+    def __init__(self, master, row, col):
         self.var = tk.Scrollbar(master)
-        # self.var.pack(side=tk.RIGHT, fill=tk.Y)
-        self.var.grid(columnspan=2)
+        self.var.grid(row=row, column=col+2, sticky=tk.NE + tk.SE)
         self.list = tk.Listbox(master, yscrollcommand=self.var.set)
         self.list_cases(20)
-        # self.list.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.list.grid(row=row, column=col-1, sticky=tk.EW, columnspan=3)
         self.var.config(command=self.list.yview)
 
     def list_cases(self, number):
+        self.list.delete(0, tk.END)
         for case in JourneyCase.similarities()[0:number]:
-            self.list.insert(tk.END, "Case nr: " + str(case[0].journey_code.number) + ', similarity: ' + str(case[1]))
+            feature_string = ''
+            for feature in case[0].features:
+                feature_string += feature + ': ' + str(case[0].features[feature]) + ', '
+            self.list.insert(tk.END, feature_string + 'Similarity: ' + str(case[1]))
 
 
 class Interface(tk.Tk):
@@ -112,6 +156,7 @@ class Interface(tk.Tk):
     def __init__(self, target_case):
         tk.Tk.__init__(self)
         for field in fields_global:
+            self.title('CBR Travel Case')
             self.entries[field] = Field.create(self, field, self.field_row, self.field_column)
             self.entries[field].make_grid()
             self.field_row += 1
@@ -119,7 +164,8 @@ class Interface(tk.Tk):
             self.entries[drop_down] = DropDown.create(self, drop_down, self.field_row, self.field_column)
             self.entries[drop_down].make_grid()
             self.field_row += 1
-        self.case_list = ListCases.create(self)
+        self.case_list = ListCases.create(self, self.field_row, self.field_column)
+        # self.case_list = MultiColumnListbox()
         self.button = tk.Button(self, text="Get best matches", command=self.on_button)
         self.button.grid(columnspan=2)
         self.target_case = target_case
@@ -127,7 +173,7 @@ class Interface(tk.Tk):
     def on_button(self):
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
-        print(JourneyCase.similarities()[0][0].journey_code.number)
+        self.case_list.list_cases(20)
 
 
 class Accommodation:
@@ -198,6 +244,8 @@ class Region:
     regions = {}
 
     def __init__(self, region=None):
+        if region is not None:
+            region = region.lower()
         self.name = region
         if region is not None:
             if region not in self.regions:
@@ -501,22 +549,21 @@ class JourneyCase:
         self.target_case = target_case
         self.similarity()
 
-    def get_case_list(self):
-        return [
-            self.case,
-            self.journey_code.number,
-            self.holiday_type.name,
-            self.price.total,
-            self.number_of_persons.total,
-            self.region.name,
-            self.transportation.name,
-            self.duration.days,
-            self.season.month,
-            self.accommodation.name,
-            self.hotel.name
-        ]
+    def get_case_features(self):
+        return {
+            'Case': self.journey_code.number,
+            'Holiday type': self.holiday_type.name,
+            'Price': self.price.total,
+            'Number of persons': self.number_of_persons.total,
+            'Region': self.region.name.title(),
+            'Transportation': self.transportation.name,
+            'Duration': self.duration.days,
+            'Season': self.season.month,
+            'Accommodation': self.accommodation.name,
+            'Hotel': self.hotel.name
+        }
 
-    list = property(get_case_list)
+    features = property(get_case_features)
 
     def similarity(self):
         sim_int = 0
@@ -776,7 +823,7 @@ def format_case_list_to_database(case):
         "holiday_type": case[2],
         "price": case[3],
         "number_of_persons": case[4],
-        "region": case[5],
+        "region": lower_case_string(case[5]),
         "transportation": case[6],
         "duration": case[7],
         "season": case[8],
@@ -858,11 +905,20 @@ def commit_cases_to_database(case_tuple):
     conn.commit()
 
 
+def lower_case_string(st):
+    my_list = re.findall('[A-Z][^A-Z]*', st)
+    region = ''
+    for x in my_list:
+        word = x.lower()
+        region += word.replace(' ', '') + ' '
+    return region[:-1]
+
+
 def load_regions_to_database(regions):
     regions_list = []
     for key in regions:
         region_dict = {
-            'region_name': key,
+            'region_name': lower_case_string(key),
             'latitude': regions[key]['Lat'],
             'longitude': regions[key]['Long']
         }
@@ -984,6 +1040,43 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
     else:
         pass
 
+
+def hamming_distance(s1, s2):
+    if len(s1) != len(s2):
+        raise ValueError("Undefined for sequences of unequal length")
+    return sum(el1 != el2 for el1, el2 in zip(s1, s2))
+
+
+def sortby(tree, col, descending):
+    """sort tree contents when a column header is clicked on"""
+    # grab values to sort
+    data = [(tree.set(child, col), child) \
+        for child in tree.get_children('')]
+    # if the data to be sorted is numeric change to float
+    #data =  change_numeric(data)
+    # now sort the data in place
+    data.sort(reverse=descending)
+    for ix, item in enumerate(data):
+        tree.move(item[1], '', ix)
+    # switch the heading so it will sort in the opposite direction
+    tree.heading(col, command=lambda col=col: sortby(tree, col,
+        int(not descending)))
+
+
+# the test data ...
+
+car_header = ['car', 'repair']
+car_list = [
+('Hyundai', 'brakes') ,
+('Honda', 'light') ,
+('Lexus', 'battery') ,
+('Benz', 'wiper') ,
+('Ford', 'tire') ,
+('Chevy', 'air') ,
+('Chrysler', 'piston') ,
+('Toyota', 'brake pedal') ,
+('BMW', 'seat')
+]
 
 regions_global = {
     'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
