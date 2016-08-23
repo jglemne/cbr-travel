@@ -5,10 +5,11 @@ import sys
 # import platform
 import openpyxl
 import operator
-import time
+# import time
 from geopy.geocoders import Nominatim
 from geopy.distance import great_circle
 import psycopg2
+import tkinter as tk
 # import magic
 # import numpy as np
 # import re
@@ -20,16 +21,53 @@ import psycopg2
 def main():
     target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
-    while True:
-        cmd = input('Skriv något!\n')
-        if cmd == 'Hej':
-            print('Hej på dig också!')
-        elif cmd == 'Fuckoff':
-            print('Trevlig kille...')
-        elif cmd == 'quit':
-            break
-        else:
-            print("Invalid command.")
+    Interface(target_case).mainloop()
+
+
+class Field:
+    fields = {}
+
+    @classmethod
+    def create(cls, master, label_text, row, col):
+        instance = Field(master, label_text, row, col)
+        cls.fields[label_text] = instance
+        return instance
+
+    def __init__(self, master, label_text, row, col):
+        self.label = tk.Label(master, text=label_text)
+        self.entry = tk.Entry(master)
+        self.row = row
+        self.col = col
+
+    def make_grid(self):
+        self.label.grid(row=self.row, sticky=tk.E)
+        self.entry.grid(row=self.row, column=self.col)
+
+    def get_input(self):
+        return self.entry.get()
+
+
+class Interface(tk.Tk):
+    field_row = 0
+    field_column = 1
+    entries = {}
+
+    def __init__(self, target_case):
+        tk.Tk.__init__(self)
+        for field in fields_global:
+            self.entries[field] = Field.create(self, field, self.field_row, self.field_column)
+            self.entries[field].make_grid()
+            self.field_row += 1
+        self.field_row = 0
+        self.button = tk.Button(self, text="Get best matches", command=self.on_button)
+        self.button.grid(columnspan=2)
+        self.target_case = target_case
+        # self.entry.pack()
+
+    def on_button(self):
+        for entry in self.entries:
+            set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
+        print(JourneyCase.similarities()[0][0].journey_code.number)
 
 
 class Accommodation:
@@ -194,14 +232,30 @@ class TargetCase:
         self.season = Season(season)
         self.transportation = Transportation(transportation)
 
+    def get_case_list(self):
+        return [
+            self.case,
+            self.journey_code.number,
+            self.holiday_type.name,
+            self.price.total,
+            self.number_of_persons.total,
+            self.region.name,
+            self.transportation.name,
+            self.duration.days,
+            self.season.month,
+            self.accommodation.name,
+            self.hotel.name
+        ]
+
     def get_accommodation(self):
-        return self.accommodation
+        return self.accommodation.name
 
     def set_accommodation(self, accommodation):
         self.accommodation = Accommodation(accommodation)
 
     def del_accommodation(self):
         del self.accommodation
+        self.accommodation = Accommodation()
 
     def get_case(self):
         return self.case
@@ -213,86 +267,96 @@ class TargetCase:
         del self.case
 
     def get_duration(self):
-        return self.duration
+        return self.duration.days
 
     def set_duration(self, duration):
         self.duration = Duration(duration)
 
     def del_duration(self):
         del self.duration
+        self.duration = Duration()
 
     def get_holiday_type(self):
-        return self.holiday_type
+        return self.holiday_type.name
 
     def set_holiday_type(self, holiday_type):
         self.holiday_type = HolidayType(holiday_type)
 
     def del_holiday_type(self):
         del self.holiday_type
+        self.holiday_type = HolidayType()
 
     def get_hotel(self):
-        return self.hotel
+        return self.hotel.name
 
     def set_hotel(self, hotel):
         self.hotel = Hotel(hotel)
 
     def del_hotel(self):
         del self.hotel
+        self.hotel = Hotel()
 
     def get_journey_code(self):
-        return self.journey_code
+        return self.journey_code.number
 
     def set_journey_code(self, journey_code):
         self.journey_code = JourneyCode(journey_code)
 
     def del_journey_code(self):
         del self.journey_code
+        self.journey_code = JourneyCode()
 
     def get_number_of_persons(self):
-        return self.number_of_persons
+        return self.number_of_persons.total
 
     def set_number_of_persons(self, number_of_persons):
         self.number_of_persons = NumberOfPersons(number_of_persons)
 
     def del_number_of_persons(self):
         del self.number_of_persons
+        self.number_of_persons = NumberOfPersons()
 
     def get_price(self):
-        return self.price
+        return self.price.total
 
     def set_price(self, price):
         self.price = Price(price)
 
     def del_price(self):
         del self.price
+        self.price = Price()
 
     def get_region(self):
-        return self.region
+        return self.region.name
 
     def set_region(self, region):
         self.region = Region(region)
 
     def del_region(self):
         del self.region
+        self.region = Region()
 
     def get_season(self):
-        return self.season
+        return self.season.month
 
     def set_season(self, season):
         self.season = Season(season)
 
     def del_season(self):
         del self.season
+        self.season = Season()
 
     def get_transportation(self):
-        return self.transportation
+        return self.transportation.name
 
     def set_transportation(self, transportation):
         self.transportation = Transportation(transportation)
 
     def del_transportation(self):
         del self.transportation
+        self.transportation = Transportation()
 
+    list = property(get_case_list)
     a = property(get_accommodation, set_accommodation, del_accommodation)
     c = property(get_case, set_case, del_case)
     d = property(get_duration, set_duration, del_duration)
@@ -316,6 +380,11 @@ class JourneyCase:
     persons_per_case = []
     price_range = [279, 7161]
     durations = []
+    accommodations = {}
+    hotels = {}
+    regions = {}
+    seasons = {}
+    transportations = {}
 
     @classmethod
     def create(
@@ -329,13 +398,22 @@ class JourneyCase:
         cls.cases[instance] = instance
         if cls.max_code < int(instance.journey_code.number):
             cls.max_code = int(instance.journey_code.number)
-        if instance.holiday_type not in cls.holiday_types:
-            cls.holiday_types[instance.holiday_type] = []
-        cls.holiday_types[instance.holiday_type].append(instance)
+        if holiday_type not in cls.holiday_types:
+            cls.holiday_types[holiday_type] = holiday_type
         cls.prices[instance] = instance.price.total
         cls.persons_per_case.append(instance.number_of_persons.total)
+        if accommodation not in cls.accommodations:
+            cls.accommodations[accommodation] = accommodation
         if instance.duration.days not in cls.durations:
             cls.durations.append(instance.duration.days)
+        if hotel not in cls.hotels:
+            cls.hotels[hotel] = hotel
+        if region not in cls.regions:
+            cls.regions[region] = region
+        if season not in cls.seasons:
+            cls.seasons[season] = season
+        if transportation not in cls.transportations:
+            cls.transportations[transportation] = transportation
         return instance
 
     @classmethod
@@ -784,6 +862,69 @@ def remove_key(d, key):
     return r
 
 
+def best_matches(number_of_matches):
+    print(JourneyCase.similarities()[:number_of_matches])
+
+
+def set_target_case_feature(feature_name, feature_entry, target_case):
+    if feature_name == 'Accommodation':
+        if feature_entry in JourneyCase.accommodations:
+            target_case.a = feature_entry
+        else:
+            del target_case.a
+    elif feature_name == 'Duration':
+        if feature_entry != '':
+            try:
+                target_case.d = int(feature_entry)
+            except ValueError:
+                del target_case.d
+        else:
+            del target_case.d
+    elif feature_name == 'Holiday type':
+        if feature_entry in JourneyCase.holiday_types:
+            target_case.ht = feature_entry
+        else:
+            del target_case.ht
+    elif feature_name == 'Hotel name':
+        if feature_entry in JourneyCase.hotels:
+            target_case.h = feature_entry
+        else:
+            del target_case.h
+    elif feature_name == 'Number of persons':
+        if feature_entry != '':
+            try:
+                target_case.nop = int(feature_entry)
+            except ValueError:
+                del target_case.nop
+        else:
+            del target_case.nop
+    elif feature_name == 'Price':
+        if feature_entry != '':
+            try:
+                target_case.p = int(feature_entry)
+            except ValueError:
+                del target_case.p
+        else:
+            del target_case.p
+    elif feature_name == 'Region':
+        if feature_entry != '':
+            target_case.r = feature_entry
+        else:
+            del target_case.r
+    elif feature_name == 'Season':
+        if feature_entry in JourneyCase.seasons:
+            target_case.s = feature_entry
+        else:
+            del target_case.s
+    elif feature_name == 'Transportation':
+        if feature_entry in JourneyCase.transportations:
+            target_case.t = feature_entry
+        else:
+            del target_case.t
+    else:
+        pass
+
+
 regions_global = {
     'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
     'Algarve': {'Lat': 37.2454248, 'Long': -8.15092517307923},
@@ -851,6 +992,18 @@ regions_global = {
     'Tyrol': {'Lat': 47.253741, 'Long': 11.601487},
     'Wales': {'Lat': 52.130661, 'Long': -3.783712}
 }
+
+fields_global = [
+            'Accommodation',
+            'Duration',
+            'Holiday type',
+            'Hotel name',
+            'Number of persons',
+            'Price',
+            'Region',
+            'Season',
+            'Transportation'
+        ]
 
 
 # Standard boilerplate to call the main() function to begin
