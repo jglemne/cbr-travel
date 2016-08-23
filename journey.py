@@ -155,8 +155,8 @@ class Interface(tk.Tk):
 
     def __init__(self, target_case):
         tk.Tk.__init__(self)
+        self.title('CBR Travel Case')
         for field in fields_global:
-            self.title('CBR Travel Case')
             self.entries[field] = Field.create(self, field, self.field_row, self.field_column)
             self.entries[field].make_grid()
             self.field_row += 1
