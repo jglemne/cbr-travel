@@ -21,6 +21,18 @@ import tkinter as tk
 def main():
     target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
+    # root = tk.Tk()
+    # ListCases(root)
+    # scrollbar = tk.Scrollbar(root)
+    # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    #
+    # my_list = tk.Listbox(root, yscrollcommand=scrollbar.set)
+    # for line in range(100):
+    #     my_list.insert(tk.END, "This is line number " + str(line))
+    #
+    # my_list.pack(side=tk.LEFT, fill=tk.BOTH)
+    # scrollbar.config(command=my_list.yview)
+    # tk.mainloop()
     Interface(target_case).mainloop()
 
 
@@ -47,6 +59,51 @@ class Field:
         return self.entry.get()
 
 
+class DropDown:
+    drop_downs = {}
+
+    @classmethod
+    def create(cls, master, label_text, row, col):
+        instance = DropDown(master, label_text, row, col)
+        cls.drop_downs[label_text] = instance
+        return instance
+
+    def __init__(self, master, label_text, row, col):
+        self.var = tk.StringVar(master)
+        self.label = tk.Label(master, text=label_text)
+        self.entry = tk.OptionMenu(master, self.var, *drop_downs_global[label_text])
+        self.row = row
+        self.col = col
+
+    def make_grid(self):
+        self.label.grid(row=self.row, sticky=tk.E)
+        self.entry.grid(row=self.row, column=self.col, sticky=tk.EW)
+
+    def get_input(self):
+        return self.var.get()
+
+
+class ListCases:
+
+    @classmethod
+    def create(cls, master):
+        instance = ListCases(master)
+        return instance
+
+    def __init__(self, master):
+        self.var = tk.Scrollbar(master)
+        # self.var.pack(side=tk.RIGHT, fill=tk.Y)
+        self.var.grid(columnspan=2)
+        self.list = tk.Listbox(master, yscrollcommand=self.var.set)
+        self.list_cases(20)
+        # self.list.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.var.config(command=self.list.yview)
+
+    def list_cases(self, number):
+        for case in JourneyCase.similarities()[0:number]:
+            self.list.insert(tk.END, "Case nr: " + str(case[0].journey_code.number) + ', similarity: ' + str(case[1]))
+
+
 class Interface(tk.Tk):
     field_row = 0
     field_column = 1
@@ -58,11 +115,14 @@ class Interface(tk.Tk):
             self.entries[field] = Field.create(self, field, self.field_row, self.field_column)
             self.entries[field].make_grid()
             self.field_row += 1
-        self.field_row = 0
+        for drop_down in drop_downs_global:
+            self.entries[drop_down] = DropDown.create(self, drop_down, self.field_row, self.field_column)
+            self.entries[drop_down].make_grid()
+            self.field_row += 1
+        self.case_list = ListCases.create(self)
         self.button = tk.Button(self, text="Get best matches", command=self.on_button)
         self.button.grid(columnspan=2)
         self.target_case = target_case
-        # self.entry.pack()
 
     def on_button(self):
         for entry in self.entries:
@@ -994,16 +1054,61 @@ regions_global = {
 }
 
 fields_global = [
-            'Accommodation',
             'Duration',
-            'Holiday type',
             'Hotel name',
             'Number of persons',
             'Price',
-            'Region',
-            'Season',
-            'Transportation'
+            'Region'
         ]
+
+drop_downs_global = {
+    'Accommodation': [
+        'Not important',
+        'HolidayFlat',
+        'OneStar',
+        'TwoStars',
+        'ThreeStars',
+        'FourStars',
+        'FiveStars'
+    ],
+    'Holiday type': [
+        'Not important',
+        'Active',
+        'Skiing',
+        'Surfing',
+        'City',
+        'Education',
+        'Recreation',
+        'Shopping',
+        'Language',
+        'Bathing',
+        'Wandering',
+        'Adventure',
+        'Diving'
+    ],
+    'Season': [
+        'Not important',
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ],
+    'Transportation': [
+        'Not important',
+        'Car',
+        'Plane',
+        'Coach',
+        'Train'
+    ]
+}
 
 
 # Standard boilerplate to call the main() function to begin
