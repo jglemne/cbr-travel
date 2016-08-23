@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3.5
 
 # import modules used here -- sys is a very standard one
-# import sys
+import sys
 # import platform
 import openpyxl
 import operator
@@ -18,30 +18,18 @@ import psycopg2
 
 
 def main():
-    target_case = TargetCase(
-        # holiday_type='Active',
-        # accommodation='FiveStars',
-        # price=4332,
-        # duration=7,
-        # number_of_persons=4,
-        # region='Linköping',
-        # transportation='Car',
-        # season='December',
-        # hotel='H.Flat Les Olympiades, France.'
-        # journey_code='134'
-    )
-    # target_case.ht = 'Recreation'
-    # target_case.nop = 2
-    # load_regions_to_database(regions_global)
-    # print(type(regions['Sweden']['Lat']))
-    start_time = time.time()
+    target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
-    print(JourneyCase.similarities()[0][1])
-    print("--- %s seconds ---" % (time.time() - start_time))
-    start_time = time.time()
-    target_case.d = 13
-    print(JourneyCase.similarities()[0][0].journey_code.number)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    while True:
+        cmd = input('Skriv något!\n')
+        if cmd == 'Hej':
+            print('Hej på dig också!')
+        elif cmd == 'Fuckoff':
+            print('Trevlig kille...')
+        elif cmd == 'quit':
+            break
+        else:
+            print("Invalid command.")
 
 
 class Accommodation:
@@ -374,6 +362,23 @@ class JourneyCase:
         self.transportation = Transportation(transportation)
         self.target_case = target_case
         self.similarity()
+
+    def get_case_list(self):
+        return [
+            self.case,
+            self.journey_code.number,
+            self.holiday_type.name,
+            self.price.total,
+            self.number_of_persons.total,
+            self.region.name,
+            self.transportation.name,
+            self.duration.days,
+            self.season.month,
+            self.accommodation.name,
+            self.hotel.name
+        ]
+
+    list = property(get_case_list)
 
     def similarity(self):
         sim_int = 0
