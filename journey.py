@@ -155,20 +155,7 @@ class Interface(tk.Tk):
 
     def __init__(self, target_case):
         tk.Tk.__init__(self)
-        for field in fields_global:
-            self.title('CBR Travel Case')
-            self.entries[field] = Field.create(self, field, self.field_row, self.field_column)
-            self.entries[field].make_grid()
-            self.field_row += 1
-        for drop_down in drop_downs_global:
-            self.entries[drop_down] = DropDown.create(self, drop_down, self.field_row, self.field_column)
-            self.entries[drop_down].make_grid()
-            self.field_row += 1
-        self.case_list = ListCases.create(self, self.field_row, self.field_column)
-        # self.case_list = MultiColumnListbox()
-        self.button = tk.Button(self, text="Get best matches", command=self.on_button)
-        self.button.grid(columnspan=2)
-        self.target_case = target_case
+        self.title('CBR Travel Case')
 
     def on_button(self):
         for entry in self.entries:
