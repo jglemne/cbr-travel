@@ -13,7 +13,6 @@ import psycopg2
 # import numpy as np
 # import re
 # from time import sleep
-import types
 
 # Gather our code in a main() function
 
@@ -21,33 +20,28 @@ import types
 def main():
     target_case = TargetCase(
         # holiday_type='Active',
-        accommodation='FiveStars',
-        price=4332,
-        duration=7,
-        number_of_persons=4,
-        region='Sweden',
-        transportation='Car',
+        # accommodation='FiveStars',
+        # price=4332,
+        # duration=7,
+        # number_of_persons=4,
+        # region='Linköping',
+        # transportation='Car',
         # season='December',
         # hotel='H.Flat Les Olympiades, France.'
         # journey_code='134'
     )
-    target_case.ht = 'Recreation'
-    target_case.nop = 2
+    # target_case.ht = 'Recreation'
+    # target_case.nop = 2
+    # load_regions_to_database(regions_global)
+    # print(type(regions['Sweden']['Lat']))
     start_time = time.time()
-    # cases = get_cases_ascii('reise.cases')
-    # instance_cases(cases, target_case)
-    # case = JourneyCase.similarities()[0][0]
-    # new_cases = [case]
-    # add_cases_to_database(new_cases)
-    conn = psycopg2.connect("dbname='travel'")
-    cur = conn.cursor()
-    cur.execute("SELECT * from cases")
-    cases = cur.fetchall()
-    # print(type(cases))
-    instance_cases(cases, target_case)
+    instance_cases(retrieve_cases(), target_case)
+    print(JourneyCase.similarities()[0][1])
     print("--- %s seconds ---" % (time.time() - start_time))
+    start_time = time.time()
+    target_case.d = 13
     print(JourneyCase.similarities()[0][0].journey_code.number)
-    print(target_case.region.coordinates)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 class Accommodation:
@@ -115,85 +109,13 @@ class Price:
 class Region:
     weight = 2
     distance = 2000
-    regions = {
-        'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
-        'Algarve': {'Lat': 37.2454248, 'Long': -8.15092517307923},
-        'Allgaeu': {'Lat': 47.7852787, 'Long': 11.6243293},
-        'Alps': {'Lat': 46.887619, 'Long': 9.6569996},
-        'Atlantic': {'Lat': 46.513516, 'Long': -1.7358398},
-        'Attica': {'Lat': 40.294204, 'Long': -87.248899},
-        'Balaton': {'Lat': 46.830268, 'Long': 17.734044},
-        'BalticSea': {'Lat': 58.487952, 'Long': 19.863281},
-        'Bavaria': {'Lat': 48.790447, 'Long': 11.497889},
-        'Belgium': {'Lat': 50.503887, 'Long': 4.469936},
-        'BlackForest': {'Lat': 47.841544, 'Long': 7.960641},
-        'Bornholm': {'Lat': 55.160428, 'Long': 14.866884},
-        'Brittany': {'Lat': 48.202047, 'Long': -2.932644},
-        'Bulgaria': {'Lat': 42.733883, 'Long': 25.48583},
-        'Cairo': {'Lat': 30.04442, 'Long': 31.235712},
-        'Carinthia': {'Lat': 46.722203, 'Long': 14.180588},
-        'Chalkidiki': {'Lat': 40.3695, 'Long': 23.287085},
-        'Corfu': {'Lat': 39.624262, 'Long': 19.921678},
-        'Corsica': {'Lat': 42.039604, 'Long': 9.012893},
-        'CostaBlanca': {'Lat': 38.504384, 'Long': -0.264345},
-        'CostaBrava': {'Lat': 42.275527, 'Long': 3.017571},
-        'CotedAzur': {'Lat': 43.120359, 'Long': 6.920913},
-        'Cyprus': {'Lat': 35.126413, 'Long': 33.429859},
-        'Crete': {'Lat': 35.240117, 'Long': 24.809269},
-        'Czechia': {'Lat': 49.817492, 'Long': 15.472962},
-        'Denmark': {'Lat': 56.26392, 'Long': 9.501785},
-        'Dolomites': {'Lat': 46.410212, 'Long': 11.844035},
-        'Egypt': {'Lat': 26.820553, 'Long': 30.802498},
-        'England': {'Lat': 52.355518, 'Long': -1.17432},
-        'ErzGebirge': {'Lat': 50.58, 'Long': 13},
-        'Fano': {'Lat': 43.839816, 'Long': 13.01942},
-        'France': {'Lat': 46.227638, 'Long': 2.213749},
-        'Fuerteventura': {'Lat': 28.358744, 'Long': -14.053676},
-        'GiantMountains': {'Lat': 50.767222, 'Long': 15.622222},
-        'GranCanaria': {'Lat': 27.92022, 'Long': -15.547437},
-        'Harz': {'Lat': 51.809525, 'Long': 10.238361},
-        'Holland': {'Lat': 52.132633, 'Long': 5.291266},
-        'Ibiza': {'Lat': 38.906734, 'Long': 1.420598},
-        'Ireland': {'Lat': 53.41291, 'Long': -8.24389},
-        'LakeGarda': {'Lat': 45.604939, 'Long': 10.635141},
-        'Lanzarote': {'Lat': 29.046854, 'Long': -13.589973},
-        'Lolland': {'Lat': 54.727543, 'Long': 11.46493},
-        'LowerAustria': {'Lat': 48.108077, 'Long': 15.804956},
-        'Madeira': {'Lat': 32.760707, 'Long': -16.959472},
-        'Mallorca': {'Lat': 39.695263, 'Long': 3.017571},
-        'Malta': {'Lat': 35.937496, 'Long': 14.375416},
-        'Morocco': {'Lat': 31.791702, 'Long': -7.09262},
-        'Normandy': {'Lat': 48.87987, 'Long': 0.171253},
-        'NorthSea': {'Lat': 56.511018, 'Long': 3.515625},
-        'Poland': {'Lat': 51.919438, 'Long': 19.145136},
-        'Rhodes': {'Lat': 36.434963, 'Long': 28.217483},
-        'Riviera': {'Lat': 44.497152, 'Long': 8.953436},
-        'SalzbergerLand': {'Lat': 47.80949, 'Long': 13.05501},
-        'Salzkammergut': {'Lat': 47.7, 'Long': 13.58},
-        'Scotland': {'Lat': 56.490671, 'Long': -4.202646},
-        'Slowakei': {'Lat': 48.669026, 'Long': 19.699024},
-        'Styria': {'Lat': 47.359344, 'Long': 14.469983},
-        'Sweden': {'Lat': 60.128161, 'Long': 18.643501},
-        'Teneriffe': {'Lat': 28.291564, 'Long': -16.62913},
-        'Thuringia': {'Lat': 51.010989, 'Long': 10.845346},
-        'Tunisia': {'Lat': 33.886917, 'Long': 9.537499},
-        'TurkishAegeanSea': {'Lat': 39.050428, 'Long': 23.429984},
-        'TurkishRiviera': {'Lat': 37.002553, 'Long': 28.015137},
-        'Tyrol': {'Lat': 47.253741, 'Long': 11.601487},
-        'Wales': {'Lat': 52.130661, 'Long': -3.783712}
-    }
+    regions = {}
 
     def __init__(self, region=None):
         self.name = region
         if region is not None:
             if region not in self.regions:
-                self.regions[region] = {'Long': '', 'Lat': ''}
-                geolocator = Nominatim()  # TODO: must learn how to use timeout() or catch error and do multiple calls
-                location = geolocator.geocode(region)
-                if location.longitude is not None:
-                    self.regions[region]['Long'] = location.longitude
-                if location.latitude is not None:
-                    self.regions[region]['Lat'] = location.latitude
+                self.new_region(region)
             self.coordinates = self.regions[region]
         else:
             self.coordinates = None
@@ -201,6 +123,27 @@ class Region:
     @classmethod
     def list_regions(cls):
         return {}.fromkeys(cls.regions).keys()
+
+    def new_region(self, region):
+        self.regions[region] = {'Long': '', 'Lat': ''}
+        conn = psycopg2.connect("dbname='travel'")
+        cur = conn.cursor()
+        cur.execute("select latitude, longitude from regions where region_name = %s", (region,))
+        result = cur.fetchall()
+        if len(result) == 0:
+            geolocator = Nominatim()  # TODO: must learn how to use timeout() & catch error
+            location = geolocator.geocode(region)
+            if location.longitude is not None:
+                new_longitude = location.longitude
+                new_latitude = location.latitude
+                self.regions[region]['Long'] = new_longitude
+                self.regions[region]['Lat'] = new_latitude
+                cur.execute("INSERT INTO regions (region_name,latitude,longitude) VALUES (%s,%s,%s)",
+                            (region, new_latitude, new_longitude))
+                conn.commit()
+        else:
+            self.regions[region]['Lat'] = result[0][0]
+            self.regions[region]['Long'] = result[0][1]
 
 
 class Season:
@@ -644,6 +587,13 @@ def get_cases_ascii(file_name):
     return cases
 
 
+def retrieve_cases():
+    conn = psycopg2.connect("dbname='travel'")
+    cur = conn.cursor()
+    cur.execute("SELECT * from cases")
+    return cur.fetchall()
+
+
 def instance_cases(cases, target_case):
     for case in cases:
         case = list(case)
@@ -678,7 +628,6 @@ def load_cases_excel(file_name, target_case):
 
 def format_case_list_to_database(case):
     new_case = ({
-        "id": case[1],
         "case_name": case[0],
         "journey_code": case[1],
         "holiday_type": case[2],
@@ -696,12 +645,9 @@ def format_case_list_to_database(case):
 
 def format_case_instance_to_database(new_case):
     case = ({
-        # "id": new_case.journey_code.number,
-        # "case_name": new_case.case,
-        # "journey_code": new_case.journey_code.number,
-        "id": 1471,
-        "case_name": 'JourneyCase1471',
-        "journey_code": 1471,
+        "id": new_case.journey_code.number,
+        "case_name": new_case.case,
+        "journey_code": new_case.journey_code.number,
         "holiday_type": new_case.holiday_type.name,
         "price": new_case.price.total,
         "number_of_persons": new_case.number_of_persons.total,
@@ -724,27 +670,25 @@ def load_cases_to_database(cases):
         list_cases.append(case)
         counter += 1
     tuple_cases = tuple(list_cases)
-    commit_to_database(tuple_cases)
+    commit_cases_to_database(tuple_cases)
 
 
 def add_cases_to_database(cases):
     counter = 0
     list_cases = []
     while counter <= len(cases)-1:
-        # string_counter = str(counter)
         case = format_case_instance_to_database(cases[counter])
         list_cases.append(case)
         counter += 1
     tuple_cases = tuple(list_cases)
-    commit_to_database(tuple_cases)
+    commit_cases_to_database(tuple_cases)
 
 
-def commit_to_database(case):
+def commit_cases_to_database(case_tuple):
     conn = psycopg2.connect("dbname='travel'")
     cur = conn.cursor()
     cur.executemany(
         "INSERT INTO cases("
-        "id,"
         "case_name,"
         "journey_code,"
         "holiday_type,"
@@ -756,7 +700,7 @@ def commit_to_database(case):
         "season,"
         "accommodation,"
         "hotel) "
-        "VALUES (%(id)s, "
+        "VALUES ("
         "%(case_name)s, "
         "%(journey_code)s, "
         "%(holiday_type)s, "
@@ -767,7 +711,34 @@ def commit_to_database(case):
         "%(duration)s, "
         "%(season)s, "
         "%(accommodation)s, "
-        "%(hotel)s)", case)
+        "%(hotel)s)", case_tuple)
+    conn.commit()
+
+
+def load_regions_to_database(regions):
+    regions_list = []
+    for key in regions:
+        region_dict = {
+            'region_name': key,
+            'latitude': regions[key]['Lat'],
+            'longitude': regions[key]['Long']
+        }
+        regions_list.append(region_dict)
+    commit_regions_to_database(tuple(regions_list))
+
+
+def commit_regions_to_database(region_tuple):
+    conn = psycopg2.connect("dbname='travel'")
+    cur = conn.cursor()
+    cur.executemany(
+        "INSERT INTO regions("
+        "region_name,"
+        "latitude,"
+        "longitude) "
+        "VALUES ("
+        "%(region_name)s, "
+        "%(latitude)s, "
+        "%(longitude)s)", region_tuple)
     conn.commit()
 
 
@@ -806,6 +777,75 @@ def remove_key(d, key):
     r = dict(d)
     del r[key]
     return r
+
+
+regions_global = {
+    'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
+    'Algarve': {'Lat': 37.2454248, 'Long': -8.15092517307923},
+    'Allgaeu': {'Lat': 47.7852787, 'Long': 11.6243293},
+    'Alps': {'Lat': 46.887619, 'Long': 9.6569996},
+    'Atlantic': {'Lat': 46.513516, 'Long': -1.7358398},
+    'Attica': {'Lat': 40.294204, 'Long': -87.248899},
+    'Balaton': {'Lat': 46.830268, 'Long': 17.734044},
+    'BalticSea': {'Lat': 58.487952, 'Long': 19.863281},
+    'Bavaria': {'Lat': 48.790447, 'Long': 11.497889},
+    'Belgium': {'Lat': 50.503887, 'Long': 4.469936},
+    'BlackForest': {'Lat': 47.841544, 'Long': 7.960641},
+    'Bornholm': {'Lat': 55.160428, 'Long': 14.866884},
+    'Brittany': {'Lat': 48.202047, 'Long': -2.932644},
+    'Bulgaria': {'Lat': 42.733883, 'Long': 25.48583},
+    'Cairo': {'Lat': 30.04442, 'Long': 31.235712},
+    'Carinthia': {'Lat': 46.722203, 'Long': 14.180588},
+    'Chalkidiki': {'Lat': 40.3695, 'Long': 23.287085},
+    'Corfu': {'Lat': 39.624262, 'Long': 19.921678},
+    'Corsica': {'Lat': 42.039604, 'Long': 9.012893},
+    'CostaBlanca': {'Lat': 38.504384, 'Long': -0.264345},
+    'CostaBrava': {'Lat': 42.275527, 'Long': 3.017571},
+    'CotedAzur': {'Lat': 43.120359, 'Long': 6.920913},
+    'Cyprus': {'Lat': 35.126413, 'Long': 33.429859},
+    'Crete': {'Lat': 35.240117, 'Long': 24.809269},
+    'Czechia': {'Lat': 49.817492, 'Long': 15.472962},
+    'Denmark': {'Lat': 56.26392, 'Long': 9.501785},
+    'Dolomites': {'Lat': 46.410212, 'Long': 11.844035},
+    'Egypt': {'Lat': 26.820553, 'Long': 30.802498},
+    'England': {'Lat': 52.355518, 'Long': -1.17432},
+    'ErzGebirge': {'Lat': 50.58, 'Long': 13},
+    'Fano': {'Lat': 43.839816, 'Long': 13.01942},
+    'France': {'Lat': 46.227638, 'Long': 2.213749},
+    'Fuerteventura': {'Lat': 28.358744, 'Long': -14.053676},
+    'GiantMountains': {'Lat': 50.767222, 'Long': 15.622222},
+    'GranCanaria': {'Lat': 27.92022, 'Long': -15.547437},
+    'Harz': {'Lat': 51.809525, 'Long': 10.238361},
+    'Holland': {'Lat': 52.132633, 'Long': 5.291266},
+    'Ibiza': {'Lat': 38.906734, 'Long': 1.420598},
+    'Ireland': {'Lat': 53.41291, 'Long': -8.24389},
+    'LakeGarda': {'Lat': 45.604939, 'Long': 10.635141},
+    'Lanzarote': {'Lat': 29.046854, 'Long': -13.589973},
+    'Lolland': {'Lat': 54.727543, 'Long': 11.46493},
+    'LowerAustria': {'Lat': 48.108077, 'Long': 15.804956},
+    'Madeira': {'Lat': 32.760707, 'Long': -16.959472},
+    'Mallorca': {'Lat': 39.695263, 'Long': 3.017571},
+    'Malta': {'Lat': 35.937496, 'Long': 14.375416},
+    'Morocco': {'Lat': 31.791702, 'Long': -7.09262},
+    'Normandy': {'Lat': 48.87987, 'Long': 0.171253},
+    'NorthSea': {'Lat': 56.511018, 'Long': 3.515625},
+    'Poland': {'Lat': 51.919438, 'Long': 19.145136},
+    'Rhodes': {'Lat': 36.434963, 'Long': 28.217483},
+    'Riviera': {'Lat': 44.497152, 'Long': 8.953436},
+    'SalzbergerLand': {'Lat': 47.80949, 'Long': 13.05501},
+    'Salzkammergut': {'Lat': 47.7, 'Long': 13.58},
+    'Scotland': {'Lat': 56.490671, 'Long': -4.202646},
+    'Slowakei': {'Lat': 48.669026, 'Long': 19.699024},
+    'Styria': {'Lat': 47.359344, 'Long': 14.469983},
+    'Sweden': {'Lat': 60.128161, 'Long': 18.643501},
+    'Teneriffe': {'Lat': 28.291564, 'Long': -16.62913},
+    'Thuringia': {'Lat': 51.010989, 'Long': 10.845346},
+    'Tunisia': {'Lat': 33.886917, 'Long': 9.537499},
+    'TurkishAegeanSea': {'Lat': 39.050428, 'Long': 23.429984},
+    'TurkishRiviera': {'Lat': 37.002553, 'Long': 28.015137},
+    'Tyrol': {'Lat': 47.253741, 'Long': 11.601487},
+    'Wales': {'Lat': 52.130661, 'Long': -3.783712}
+}
 
 
 # Standard boilerplate to call the main() function to begin
