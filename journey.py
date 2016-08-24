@@ -151,11 +151,15 @@ class Interface(tk.Tk):
         tk.Tk.__init__(self)
         self.title('CBR Travel Case')
         self.list = MultiColumnListbox()
+        self.button = tk.Button(self, text="Get best matches", command=self.on_button)
+        self.button.pack(side=tk.BOTTOM)
+        self.target_case = target_case
 
-    # def on_button(self):
-    #     for entry in self.entries:
-    #         set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
-    #     self.case_list.list_cases(20)
+    def on_button(self):
+        print('Hej där')
+        # for entry in self.entries:
+        #     set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
+        # self.case_list.list_cases(20)
 
 
 class Accommodation:
