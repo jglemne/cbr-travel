@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3.5
 
-# import modules used here -- sys is a very standard one
-import sys
+# import sys
 # import platform
 import openpyxl
 import operator
@@ -12,12 +11,7 @@ import psycopg2
 import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
-# import magic
-# import numpy as np
 import re
-# from time import sleep
-
-# Gather our code in a main() function
 
 
 def main():
@@ -31,7 +25,7 @@ class MultiColumnListbox:
     def __init__(self):
         self.tree = None
         self._setup_widgets()
-        self._build_tree()
+        self.build_tree()
 
     def _setup_widgets(self):
         container = ttk.Frame()
@@ -50,14 +44,11 @@ class MultiColumnListbox:
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-    def _build_tree(self):
+    def build_tree(self):
         for col in JourneyCase.list:
-            self.tree.heading(col, text=col.title(),
-                              command=lambda c=col: sortby(self.tree, c, 0))
+            self.tree.heading(col, text=col.title(), command=lambda c=col: sortby(self.tree, c, 0))
             # adjust the column's width to the header string
-            self.tree.column(col,
-                             width=tkFont.Font().measure(col.title()))
-
+            self.tree.column(col, width=tkFont.Font().measure(col.title()))
         for item in JourneyCase.similarities()[0:20]:
             self.tree.insert('', 'end', values=item[0].case_tuples)
             # adjust column's width if necessary to fit each value
@@ -169,10 +160,10 @@ class Interface(tk.Tk):
         self.target_case = target_case
 
     def on_button(self):
-        print('Hej där')
-        # for entry in self.entries:
-        #     set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
-        # self.case_list.list_cases(20)
+        self.list.tree.delete(*self.list.tree.get_children())
+        for entry in self.entries:
+            set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
+        self.list.build_tree()
 
 
 class Accommodation:
@@ -493,17 +484,17 @@ class JourneyCase:
     seasons = {}
     transportations = {}
     list = [
-            'Case',
-            'Holiday type',
-            'Price',
-            'Number of persons',
-            'Region',
-            'Transportation',
-            'Duration',
-            'Season',
-            'Accommodation',
-            'Hotel',
-            'Similarity'
+        'Similarity',
+        'Case',
+        'Holiday type',
+        'Price',
+        'Number of persons',
+        'Region',
+        'Transportation',
+        'Duration',
+        'Season',
+        'Accommodation',
+        'Hotel'
         ]
 
     @classmethod
@@ -577,6 +568,7 @@ class JourneyCase:
 
     def get_case_tuple(self):
         return (
+            self.similarity(),
             self.journey_code.number,
             self.holiday_type.name,
             self.price.total,
@@ -586,8 +578,7 @@ class JourneyCase:
             self.duration.days,
             self.season.month,
             self.accommodation.name,
-            self.hotel.name,
-            self.similarity()
+            self.hotel.name
         )
 
     features = property(get_case_features)
@@ -1099,21 +1090,6 @@ def change_numeric(data):
         float_list.append(new_tuple)
     return float_list
 
-
-# the test data ...
-
-sim_header = ['car', 'repair']
-car_list = [
-('Hyundai', 'brakes') ,
-('Honda', 'light') ,
-('Lexus', 'battery') ,
-('Benz', 'wiper') ,
-('Ford', 'tire') ,
-('Chevy', 'air') ,
-('Chrysler', 'piston') ,
-('Toyota', 'brake pedal') ,
-('BMW', 'seat')
-]
 
 regions_global = {
     'AdriaticSea': {'Lat': 43.7021514, 'Long': 14.6679465},
