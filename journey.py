@@ -24,14 +24,9 @@ def main():
     target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
     Interface(target_case).mainloop()
-    # root = tk.Tk()
-    # root.title("Multicolumn Treeview/Listbox")
-    # listbox = MultiColumnListbox()
-    # root.mainloop()
 
 
-class MultiColumnListbox():
-    """use a ttk.TreeView as a multicolumn ListBox"""
+class MultiColumnListbox:
 
     def __init__(self):
         self.tree = None
@@ -45,9 +40,8 @@ class MultiColumnListbox():
         msg.pack(fill='x')
         container = ttk.Frame()
         container.pack(fill='both', expand=True)
-        # container.grid(column=)
         # create a treeview with dual scrollbars
-        self.tree = ttk.Treeview(columns=car_header, show="headings")
+        self.tree = ttk.Treeview(columns=JourneyCase.list, show="headings")
         vsb = ttk.Scrollbar(orient="vertical",
                             command=self.tree.yview)
         hsb = ttk.Scrollbar(orient="horizontal",
@@ -61,20 +55,20 @@ class MultiColumnListbox():
         container.grid_rowconfigure(0, weight=1)
 
     def _build_tree(self):
-        for col in car_header:
+        for col in JourneyCase.list:
             self.tree.heading(col, text=col.title(),
                               command=lambda c=col: sortby(self.tree, c, 0))
             # adjust the column's width to the header string
             self.tree.column(col,
                              width=tkFont.Font().measure(col.title()))
 
-        for item in car_list:
-            self.tree.insert('', 'end', values=item)
+        for item in JourneyCase.similarities()[0:20]:
+            self.tree.insert('', 'end', values=item[0].case_tuples)
             # adjust column's width if necessary to fit each value
             for ix, val in enumerate(item):
                 col_w = tkFont.Font().measure(val)
-                if self.tree.column(car_header[ix], width=None) < col_w:
-                    self.tree.column(car_header[ix], width=col_w)
+                if self.tree.column(JourneyCase.list[ix], width=None) < col_w:
+                    self.tree.column(JourneyCase.list[ix], width=col_w)
 
 
 class Field:
@@ -156,11 +150,12 @@ class Interface(tk.Tk):
     def __init__(self, target_case):
         tk.Tk.__init__(self)
         self.title('CBR Travel Case')
+        self.list = MultiColumnListbox()
 
-    def on_button(self):
-        for entry in self.entries:
-            set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
-        self.case_list.list_cases(20)
+    # def on_button(self):
+    #     for entry in self.entries:
+    #         set_target_case_feature(entry, self.entries[entry].get_input(), self.target_case)
+    #     self.case_list.list_cases(20)
 
 
 class Accommodation:
@@ -480,6 +475,19 @@ class JourneyCase:
     regions = {}
     seasons = {}
     transportations = {}
+    list = [
+            'Case',
+            'Holiday type',
+            'Price',
+            'Number of persons',
+            'Region',
+            'Transportation',
+            'Duration',
+            'Season',
+            'Accommodation',
+            'Hotel',
+            'Similarity'
+        ]
 
     @classmethod
     def create(
@@ -550,7 +558,23 @@ class JourneyCase:
             'Hotel': self.hotel.name
         }
 
+    def get_case_tuple(self):
+        return (
+            self.journey_code.number,
+            self.holiday_type.name,
+            self.price.total,
+            self.number_of_persons.total,
+            self.region.name,
+            self.transportation.name,
+            self.duration.days,
+            self.season.month,
+            self.accommodation.name,
+            self.hotel.name,
+            self.similarity()
+        )
+
     features = property(get_case_features)
+    case_tuples = property(get_case_tuple)
 
     def similarity(self):
         sim_int = 0
@@ -1035,24 +1059,33 @@ def hamming_distance(s1, s2):
 
 
 def sortby(tree, col, descending):
-    """sort tree contents when a column header is clicked on"""
     # grab values to sort
-    data = [(tree.set(child, col), child) \
-        for child in tree.get_children('')]
+    data = [(tree.set(child, col), child) for child in tree.get_children('')]
     # if the data to be sorted is numeric change to float
-    #data =  change_numeric(data)
+    try:
+        data = change_numeric(data)
+    except ValueError:
+        pass
     # now sort the data in place
     data.sort(reverse=descending)
     for ix, item in enumerate(data):
         tree.move(item[1], '', ix)
     # switch the heading so it will sort in the opposite direction
-    tree.heading(col, command=lambda col=col: sortby(tree, col,
-        int(not descending)))
+    tree.heading(col, command=lambda col=col: sortby(tree, col, int(not descending)))
+
+
+def change_numeric(data):
+    float_list = []
+    for data_tuple in data:
+        new_float = float(data_tuple[0])
+        new_tuple = (new_float, data_tuple[1])
+        float_list.append(new_tuple)
+    return float_list
 
 
 # the test data ...
 
-car_header = ['car', 'repair']
+sim_header = ['car', 'repair']
 car_list = [
 ('Hyundai', 'brakes') ,
 ('Honda', 'light') ,
