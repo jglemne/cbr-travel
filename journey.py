@@ -34,10 +34,6 @@ class MultiColumnListbox:
         self._build_tree()
 
     def _setup_widgets(self):
-        s = "\click on header to sort by that column to change width of column drag boundary"
-        msg = ttk.Label(wraplength="4i", justify="left", anchor="n",
-                        padding=(10, 2, 10, 6), text=s)
-        msg.pack(fill='x')
         container = ttk.Frame()
         container.pack(fill='both', expand=True)
         # create a treeview with dual scrollbars
@@ -150,9 +146,26 @@ class Interface(tk.Tk):
     def __init__(self, target_case):
         tk.Tk.__init__(self)
         self.title('CBR Travel Case')
+        s = "Welcome! \n" \
+            "This CBR-system is designed to give you journey suggestions based " \
+            "on your preferences. When you edit your preferences here below and then press" \
+            "'Get best matches', the system will compare your preferences with a given " \
+            "number of cases and bring you the best matches calculated in percent. "
+        self.msg = ttk.Label(wraplength="8i", justify="center", anchor="n", padding=(10, 2, 10, 6), text=s)
+        self.msg.pack(fill='x')
+        self.field_frame = tk.Frame(self)
+        self.field_frame.pack(side=tk.TOP)
+        for field in fields_global:
+            self.entries[field] = Field.create(self.field_frame, field, self.field_row, self.field_column)
+            self.entries[field].make_grid()
+            self.field_row += 1
+        for drop_down in drop_downs_global:
+            self.entries[drop_down] = DropDown.create(self.field_frame, drop_down, self.field_row, self.field_column)
+            self.entries[drop_down].make_grid()
+            self.field_row += 1
+        self.button = tk.Button(self.field_frame, text="Get best matches", command=self.on_button)
+        self.button.grid(columnspan=2)
         self.list = MultiColumnListbox()
-        self.button = tk.Button(self, text="Get best matches", command=self.on_button)
-        self.button.pack(side=tk.BOTTOM)
         self.target_case = target_case
 
     def on_button(self):
