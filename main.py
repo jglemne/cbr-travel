@@ -977,7 +977,5 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
         pass
 
 
-# Standard boilerplate to call the main() function to begin
-# the program.
 if __name__ == '__main__':
     main()
