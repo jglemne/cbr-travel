@@ -2,6 +2,7 @@
 
 import psycopg2
 import re
+from geopy.exc import GeocoderTimedOut
 
 
 def retrieve_cases():
@@ -166,3 +167,10 @@ def fixed_list(number_of_elements):
     for i in range(number_of_elements):
         x[i] = i
     return x
+
+
+def do_geocode(region, geolocator):
+    try:
+        return geolocator.geocode(region)
+    except GeocoderTimedOut:
+        return do_geocode(region)

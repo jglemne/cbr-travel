@@ -1,7 +1,8 @@
 import psycopg2
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from geopy.exc import GeocoderServiceError
 from globals import weights_global
+from tools import do_geocode
 
 
 class Accommodation:
@@ -95,7 +96,7 @@ class Region:
         if len(result) == 0:
             geolocator = Nominatim()  # TODO: must learn how to use timeout() & catch error
             try:
-                location = geolocator.geocode(region)
+                location = do_geocode(region, geolocator)
                 new_longitude = location.longitude
                 new_latitude = location.latitude
                 self.regions[region]['Long'] = new_longitude
@@ -103,7 +104,7 @@ class Region:
                 cur.execute("INSERT INTO regions (region_name,latitude,longitude) VALUES (%s,%s,%s)",
                             (region, new_latitude, new_longitude))
                 conn.commit()
-            except (GeocoderTimedOut, GeocoderServiceError, AttributeError) as e:
+            except (GeocoderServiceError, AttributeError) as e:
                 print("Error: Failed to find region %s with message %s" % (region, e))
         else:
             self.regions[region]['Lat'] = result[0][0]

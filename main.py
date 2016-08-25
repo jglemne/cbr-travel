@@ -24,7 +24,7 @@ class MultiColumnListbox:
         self.tree = None
         self.selected_case = None
         self._setup_widgets()
-        self.build_tree(nr_of_results)
+        self.build_tree(nr_of_results, root)
 
     def _setup_widgets(self):
         container = ttk.Frame()
@@ -42,7 +42,7 @@ class MultiColumnListbox:
         self.tree.bind("<Key>", self.selection)
         self.tree.bind("<ButtonRelease-1>", self.selection)
 
-    def build_tree(self, nr_of_results):
+    def build_tree(self, nr_of_results, root):
         for col in JourneyCase.list:
             self.tree.heading(col, text=col, command=lambda c=col: sortby(self.tree, c, 0))
             # adjust the column's width to the header string
@@ -50,7 +50,7 @@ class MultiColumnListbox:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        for item in JourneyCase.similarities()[0:nr_of_results]:
+        for item in JourneyCase.similarities(root.target_case)[0:nr_of_results]:
             self.tree.insert('', 'end', values=item[0].case_tuples)
 
     def selection(self, event):
@@ -181,6 +181,7 @@ class Interface(tk.Tk):
 
     def __init__(self, target_case):
         tk.Tk.__init__(self)
+        self.target_case = target_case
         self.title('CBR Travel Case')
         self.window = None
         self.message_box = None
@@ -247,7 +248,6 @@ class Interface(tk.Tk):
         self.status_text.set("Copyright Joel Glemne")
         self.status = ttk.Label(justify="left", padding=(10, 2, 10, 2), textvariable=self.status_text, relief=tk.RAISED)
         self.status.pack(side=tk.BOTTOM, fill='x')
-        self.target_case = target_case
 
     def get_best_matches(self):
         self.status_text.set("Collecting best matches...")
@@ -255,7 +255,7 @@ class Interface(tk.Tk):
         self.case_buttons_state("disabled")
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].input, self.target_case)
-        self.list.build_tree(self.nr_of_results)
+        self.list.build_tree(self.nr_of_results, self)
         self.status_text.set("Done")
 
     def case_buttons_state(self, state):
@@ -335,7 +335,7 @@ class Interface(tk.Tk):
         new_case[2] = ''
         cases_to_create = [new_case]
         instance_cases(cases_to_create, self.target_case)
-        self.list.build_tree(self.nr_of_results)
+        self.list.build_tree(self.nr_of_results, self)
         self.edit_entries = {}
         self.window.destroy()
 
@@ -388,7 +388,7 @@ class Interface(tk.Tk):
         self.case_buttons_state("disabled")
         for entry in self.edit_entries:
             set_target_case_feature(entry, self.edit_entries[entry].input, case)
-        self.list.build_tree(self.nr_of_results)
+        self.list.build_tree(self.nr_of_results, self)
         self.edit_entries = {}
         self.window.destroy()
 
@@ -624,6 +624,7 @@ class JourneyCase(TargetCase):
     codes = {}
     transportations = {}
     max_code = 1470
+    # key_cases = {}
     list = [
         'Similarity [%]',
         'Case [index]',
@@ -665,13 +666,15 @@ class JourneyCase(TargetCase):
             cls.seasons[season] = season
         if transportation not in cls.transportations:
             cls.transportations[transportation] = transportation
+        # if not bool(cls.key_cases):
+        #     instance.sim_key_cases()
         return instance
 
     @classmethod
-    def similarities(cls):
+    def similarities(cls, case):
         similarities = {}
         for instance in cls.cases:
-            similarities[instance] = instance.similarity()
+            similarities[instance] = instance.similarity(case)
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
@@ -691,7 +694,11 @@ class JourneyCase(TargetCase):
         self.season = Season(season)
         self.transportation = Transportation(transportation)
         self.target_case = target_case
-        self.similarity()
+        self.similarity(self.target_case)
+    #
+    # def sim_key_cases(self):
+    #     for instance in cls.key_cases:
+    #
 
     def delete_case(self):
         del self.codes[self.journey_code.number]
@@ -724,7 +731,7 @@ class JourneyCase(TargetCase):
 
     def get_case_tuple(self):
         return (
-            "{0:.2f}".format(round(self.similarity()*100, 2)),
+            "{0:.2f}".format(round(self.similarity(self.target_case)*100, 2)),
             self.journey_code.number,
             self.holiday_type.name,
             self.price.total,
@@ -740,149 +747,149 @@ class JourneyCase(TargetCase):
     features = property(get_case_features)
     case_tuples = property(get_case_tuple)
 
-    def similarity(self):
+    def similarity(self, case):
         sim_int = 0
         total_weight = 0
         # Accommodation
-        if self.target_case.accommodation.name is not None:
+        if case.accommodation.name is not None:
             weight = self.accommodation.weight
-            sim_int += self.accommodation_sim() * weight
+            sim_int += self.accommodation_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Duration
-        if self.target_case.duration.days is not None:
+        if case.duration.days is not None:
             weight = self.duration.weight
-            sim_int += self.duration_sim() * weight
+            sim_int += self.duration_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Holiday type
-        if self.target_case.holiday_type.name is not None:
+        if case.holiday_type.name is not None:
             weight = self.holiday_type.weight
-            sim_int += self.holiday_type_sim() * weight
+            sim_int += self.holiday_type_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Hotel
-        if self.target_case.hotel.name is not None:
+        if case.hotel.name is not None:
             weight = self.hotel.weight
-            sim_int += self.hotel_sim() * weight
+            sim_int += self.hotel_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Journey code
-        if self.target_case.journey_code.number is not None:
+        if case.journey_code.number is not None:
             weight = self.journey_code.weight
-            sim_int += self.journey_code_sim() * weight
+            sim_int += self.journey_code_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Number of persons
-        if self.target_case.number_of_persons.total is not None:
+        if case.number_of_persons.total is not None:
             weight = self.number_of_persons.weight
-            sim_int += self.number_of_persons_sim() * weight
+            sim_int += self.number_of_persons_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Price
-        if self.target_case.price.total is not None:
+        if case.price.total is not None:
             weight = self.price.weight
-            sim_int += self.price_sim() * weight
+            sim_int += self.price_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Region
-        if self.target_case.region.name is not None:
+        if case.region.name is not None:
             weight = self.region.weight
-            sim_int += self.region_sim() * weight
+            sim_int += self.region_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Season
-        if self.target_case.season.name is not None:
+        if case.season.name is not None:
             weight = self.season.weight
-            sim_int += self.season_sim() * weight
+            sim_int += self.season_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         # Transportation
-        if self.target_case.transportation.similarity is not None:
+        if case.transportation.similarity is not None:
             weight = self.transportation.weight
-            sim_int += self.transportation_sim() * weight
+            sim_int += self.transportation_sim(case) * weight
             total_weight += weight
         else:
             sim_int += 1
             total_weight += 1
         return sim_int/total_weight
 
-    def accommodation_sim(self):
-        if self.accommodation.index >= self.target_case.accommodation.index:
+    def accommodation_sim(self, case):
+        if self.accommodation.index >= case.accommodation.index:
             return 1
         else:
-            return self.accommodation.index/self.target_case.accommodation.index
+            return self.accommodation.index/case.accommodation.index
 
-    def duration_sim(self):
-        if self.duration.days == self.target_case.duration.days:
+    def duration_sim(self, case):
+        if self.duration.days == case.duration.days:
             return 1
-        elif abs(self.duration.days - self.target_case.duration.days) <= 4:
-            return (5 - abs(self.duration.days - self.target_case.duration.days))/5
+        elif abs(self.duration.days - case.duration.days) <= 4:
+            return (5 - abs(self.duration.days - case.duration.days))/5
         else:
             return 0
 
-    def holiday_type_sim(self):
-        if self.holiday_type.group == self.target_case.holiday_type.group:
+    def holiday_type_sim(self, case):
+        if self.holiday_type.group == case.holiday_type.group:
             return 1
-        elif self.holiday_type.group[-3:] == self.target_case.holiday_type.group[-3:]:
-            if self.target_case.holiday_type.group[-3:] == '100':
+        elif self.holiday_type.group[-3:] == case.holiday_type.group[-3:]:
+            if case.holiday_type.group[-3:] == '100':
                 return 0.6
             else:
                 return 0.5
         else:
             return 0.3
 
-    def hotel_sim(self):
-        if self.hotel.name == self.target_case.hotel.name:
+    def hotel_sim(self, case):
+        if self.hotel.name == case.hotel.name:
             return 1
         else:
             return 0
 
-    def journey_code_sim(self):
-        if self.journey_code.number == self.target_case.journey_code.number:
+    def journey_code_sim(self, case):
+        if self.journey_code.number == case.journey_code.number:
             return 1
         else:
             return 0
 
-    def number_of_persons_sim(self):
-        if self.number_of_persons.total == self.target_case.number_of_persons.total:
+    def number_of_persons_sim(self, case):
+        if self.number_of_persons.total == case.number_of_persons.total:
             return 1
-        elif abs(self.number_of_persons.total - self.target_case.number_of_persons.total) < 2:
+        elif abs(self.number_of_persons.total - case.number_of_persons.total) < 2:
             return 0.5
         else:
             return 0
 
-    def price_sim(self):
-        if (self.price.total <= self.target_case.price.total) | (self.target_case.price.total > self.price_range[1]):
+    def price_sim(self, case):
+        if (self.price.total <= case.price.total) | (case.price.total > self.price_range[1]):
             return 1
-        elif self.target_case.price.total < self.price_range[0]:
+        elif case.price.total < self.price_range[0]:
             return 0
         else:
-            return 1 - ((self.price.total - self.target_case.price.total) / (self.price_range[1] - self.price_range[0]))
+            return 1 - ((self.price.total - case.price.total) / (self.price_range[1] - self.price_range[0]))
 
-    def region_sim(self):
-        if self.region.name == self.target_case.region.name:
+    def region_sim(self, case):
+        if self.region.name == case.region.name:
             return 1
-        elif self.target_case.region.coordinates is not None:
-            target = (self.target_case.region.coordinates['Lat'], self.target_case.region.coordinates['Long'])
+        elif case.region.coordinates is not None:
+            target = (case.region.coordinates['Lat'], case.region.coordinates['Long'])
             source = (self.region.coordinates['Lat'], self.region.coordinates['Long'])
             distance = great_circle(target, source).kilometers
             if distance > self.region.distance:
@@ -895,18 +902,18 @@ class JourneyCase(TargetCase):
         else:
             return 0
 
-    def season_sim(self):
-        if self.season.month == self.target_case.season.month:
+    def season_sim(self, case):
+        if self.season.month == case.season.month:
             return 1
-        elif self.season.name[1] == self.target_case.season.name[1]:
+        elif self.season.name[1] == case.season.name[1]:
             return 0.5
-        elif self.season.name[0] == self.target_case.season.name[0]:
+        elif self.season.name[0] == case.season.name[0]:
             return 0.2
         else:
             return 0
 
-    def transportation_sim(self):
-        return self.target_case.transportation.similarity[self.transportation.similarity.index(1.0)]
+    def transportation_sim(self, case):
+        return case.transportation.similarity[self.transportation.similarity.index(1.0)]
 
 
 def instance_cases(cases, target_case):
