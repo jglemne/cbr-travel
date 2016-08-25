@@ -70,7 +70,8 @@ weights_global = {
 
 algorithm = {
     'fast': False,
-    'adapt': False
+    'adapt': False,
+    'key cases': 6
 }
 
 adaptables = {

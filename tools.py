@@ -174,3 +174,9 @@ def do_geocode(region, geo_locator):
         return geo_locator.geocode(region)
     except GeocoderTimedOut:
         return do_geocode(region, geo_locator)
+
+
+def merge_dicts(x, y):
+    z = x.copy()
+    z.update(y)
+    return z
