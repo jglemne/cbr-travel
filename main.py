@@ -1,16 +1,12 @@
 #!/usr/local/bin/python3.5
 
-# import sys
-# import platform
-import openpyxl
 import operator
-# import time
 from geopy.distance import great_circle
 import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
 import tkinter.messagebox
-from globals import fields_global, drop_downs_global, regions_global
+from globals import fields_global, drop_downs_global
 from tools import *
 from features import *
 
@@ -151,7 +147,7 @@ class Menu:
         self.root.add_cascade(label="File", menu=self.file_menu)
         # 'Case Base'
         self.cb_menu = tk.Menu(self.root, tearoff=0)
-        self.cb_menu.add_command(label="Show case base")
+        # self.cb_menu.add_command(label="Show case base")
         self.cb_menu.add_command(
             label="Add new case",
             command=master.add_case_window
@@ -248,7 +244,7 @@ class Interface(tk.Tk):
         )
         self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
         self.status_text = tk.StringVar()
-        self.status_text.set("Done")
+        self.status_text.set("Copyright Joel Glemne")
         self.status = ttk.Label(justify="left", padding=(10, 2, 10, 2), textvariable=self.status_text, relief=tk.RAISED)
         self.status.pack(side=tk.BOTTOM, fill='x')
         self.target_case = target_case
@@ -339,7 +335,6 @@ class Interface(tk.Tk):
         new_case[2] = ''
         cases_to_create = [new_case]
         instance_cases(cases_to_create, self.target_case)
-        print(JourneyCase.codes[new_case[0]])
         self.list.build_tree(self.nr_of_results)
         self.edit_entries = {}
         self.window.destroy()
@@ -608,10 +603,21 @@ class TargetCase:
 
 class JourneyCase(TargetCase):
     cases = {}
-    holiday_types = {}
+    holiday_types = {
+        'Active': 'Active', 'City': 'City', 'Education': 'Education', 'Recreation': 'Recreation',
+        'Shopping': 'Shopping', 'Language': 'Language', 'Bathing': 'Bathing', 'Wandering': 'Wandering',
+        'Adventure': 'Adventure', 'Diving': 'Diving', 'Skiing': 'Skiing', 'Surfing': 'Surfing'
+    }
     price_range = [239, 8007]
     durations = []
-    accommodations = {}
+    accommodations = {
+        'HolidayFlat': 'HolidayFlat',
+        'OneStar': 'OneStar',
+        'TwoStars': 'TwoStars',
+        'ThreeStars': 'ThreeStars',
+        'FourStars': 'FourStars',
+        'FiveStars': 'FiveStars'
+    }
     hotels = {}
     regions = {}
     seasons = {}
@@ -910,29 +916,6 @@ def instance_cases(cases, target_case):
             case[1], case[0], case[3], int(case[4]),
             int(case[5]), case[6], case[7], int(case[8]),
             case[9], case[10], case[11], target_case)
-
-
-def load_cases_excel(file_name, target_case):
-    wb = openpyxl.load_workbook(file_name)
-    sheet_names = wb.get_sheet_names()
-    sheet_name = sheet_names[0]
-    sheet = wb.get_sheet_by_name(sheet_name)
-    case_column = 3
-    case_row = 1
-    is_case = True
-    while is_case:
-        case = [None] * 11
-        header_cell = sheet.cell(row=case_row, column=case_column-2).value
-        if header_cell is None or header_cell != 'defcase':
-            is_case = False
-        else:
-            for next_cell in range(2, 13):
-                case[next_cell-2] = sheet.cell(row=case_row + next_cell, column=3).value
-            JourneyCase.create(
-                case[0], case[1], case[2].replace(',', ''), case[3],
-                case[4], case[5].replace(',', ''), case[6].replace(',', ''), case[7],
-                case[8].replace(',', ''), case[9].replace(',', ''), case[10], target_case)
-        case_row += 16
 
 
 def set_target_case_feature(feature_name, feature_entry, target_case):
