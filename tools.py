@@ -246,3 +246,10 @@ def change_numeric(data):
         new_tuple = (new_float, data_tuple[1])
         float_list.append(new_tuple)
     return float_list
+
+
+def fixed_list(number_of_elements):
+    x = [None] * number_of_elements
+    for i in range(number_of_elements):
+        x[i] = i
+    return x

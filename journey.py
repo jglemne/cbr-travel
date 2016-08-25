@@ -10,7 +10,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
 import tkinter.messagebox
-from globals import fields_global, drop_downs_global
+from globals import fields_global, drop_downs_global, regions_global
 from tools import *
 from features import *
 
@@ -152,7 +152,10 @@ class Menu:
         # 'Case Base'
         self.cb_menu = tk.Menu(self.root, tearoff=0)
         self.cb_menu.add_command(label="Show case base")
-        self.cb_menu.add_command(label="Add new case")
+        self.cb_menu.add_command(
+            label="Add new case",
+            command=master.add_case_window
+        )
         self.cb_menu.add_command(
             state="disabled",
             label="Edit selected case",
@@ -264,6 +267,82 @@ class Interface(tk.Tk):
         self.ec_button.config(state=state)
         self.menu.cb_menu.entryconfig("Edit selected case", state=state)
         self.menu.cb_menu.entryconfig("Delete selected case", state=state)
+
+    def add_case_window(self):
+        self.window = tk.Toplevel(self)
+        self.edit_entries = {}
+        self.window.field_frame = tk.Frame(self.window)
+        self.window.field_frame.pack(side=tk.TOP, pady=(10, 0))
+        for field in fields_global:
+            self.edit_entries[field] = Field.create(
+                self.window.field_frame,
+                field,
+                self.field_row,
+                self.field_column
+            )
+            self.edit_entries[field].make_grid()
+            self.field_row += 1
+        for drop_down in drop_downs_global:
+            self.edit_entries[drop_down] = DropDown.create(
+                self.window.field_frame,
+                drop_down,
+                self.field_row,
+                self.field_column
+            )
+            self.edit_entries[drop_down].make_grid()
+            self.field_row += 1
+        self.field_row = 0
+        self.window.button_frame = tk.Frame(self.window)
+        self.window.button_frame.pack(side=tk.BOTTOM)
+        self.window.cancel_button = tk.Button(
+            self.window.button_frame,
+            text="Cancel",
+            state=tk.NORMAL,
+            command=self.window.destroy
+        )
+        self.window.cancel_button.pack(side=tk.LEFT, pady=(10, 10), padx=(10, 10))
+        self.window.apply_button = tk.Button(
+            self.window.button_frame,
+            text="Add to case base",
+            state=tk.NORMAL,
+            command=lambda: self.add_case()
+        )
+        self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
+
+    def add_case(self):
+        self.list.tree.delete(*self.list.tree.get_children())
+        self.case_buttons_state("disabled")
+        new_case = fixed_list(12)
+        for entry in self.edit_entries:
+            if entry == 'Number of persons':
+                new_case[5] = self.edit_entries[entry].input
+            elif entry == 'Season':
+                new_case[9] = self.edit_entries[entry].input
+            elif entry == 'Region':
+                new_case[6] = self.edit_entries[entry].input
+            elif entry == 'Price':
+                new_case[4] = self.edit_entries[entry].input
+            elif entry == 'Hotel':
+                new_case[11] = self.edit_entries[entry].input
+            elif entry == 'Accommodation':
+                new_case[10] = self.edit_entries[entry].input
+            elif entry == 'Holiday type':
+                new_case[3] = self.edit_entries[entry].input
+            elif entry == 'Transportation':
+                new_case[7] = self.edit_entries[entry].input
+            elif entry == 'Duration':
+                new_case[8] = self.edit_entries[entry].input
+            else:
+                pass
+        new_case[1] = 'Journey' + str(JourneyCase.max_code)
+        new_case[0] = JourneyCase.max_code
+        new_case[2] = ''
+        cases_to_create = [new_case]
+        instance_cases(cases_to_create, self.target_case)
+        print(JourneyCase.codes[new_case[0]])
+        self.list.build_tree(self.nr_of_results)
+        self.edit_entries = {}
+        self.window.destroy()
 
     def edit_case_window(self):
         case = self.list.case
@@ -538,6 +617,7 @@ class JourneyCase(TargetCase):
     seasons = {}
     codes = {}
     transportations = {}
+    max_code = 1470
     list = [
         'Similarity [%]',
         'Case [index]',
@@ -563,6 +643,8 @@ class JourneyCase(TargetCase):
             duration, season, accommodation, hotel, target_case)
         cls.cases[instance] = instance
         cls.codes[journey_code] = instance
+        if journey_code > 1470:
+            cls.max_code = journey_code
         if holiday_type not in cls.holiday_types:
             cls.holiday_types[holiday_type] = holiday_type
         if accommodation not in cls.accommodations:
