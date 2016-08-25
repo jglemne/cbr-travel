@@ -68,4 +68,20 @@ weights_global = {
     'Transportation': 4
 }
 
-fast = True
+algorithm = {
+    'fast': False,
+    'adapt': False
+}
+
+adaptables = {
+    'Accommodation': False,
+    'Duration': True,
+    'Holiday type': False,
+    'Hotel': False,
+    'Journey code': False,
+    'Number of persons': True,
+    'Price': True,
+    'Region': False,
+    'Season': False,
+    'Transportation': False
+}

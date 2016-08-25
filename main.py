@@ -6,9 +6,11 @@ import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
 import tkinter.messagebox
-from globals import fields_global, drop_downs_global, fast
+from globals import fields_global, drop_downs_global, algorithm
 from tools import *
 from features import *
+import time
+# import heapq
 
 
 def main():
@@ -50,7 +52,9 @@ class MultiColumnListbox:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        results = JourneyCase.fast_knn(root.target_case) if fast else JourneyCase.knn(root.target_case)
+        start_time = time.time()
+        results = JourneyCase.fprs(root.target_case) if algorithm['fast'] else JourneyCase.knn(root.target_case)
+        print("Execution time: " + str(time.time() - start_time))
         if len(results) < nr_of_results:
             nr_of_results = len(results)
         for item in results[0:nr_of_results]:
@@ -168,14 +172,19 @@ class Menu:
         self.root.add_cascade(label="Case Base", menu=self.cb_menu)
         # 'Similarities'
         self.sim_menu = tk.Menu(self.root, tearoff=0)
-        if fast:
-            self.sim_menu.add_command(label="Switch to kNN", command=master.set_algorithm)
+        if algorithm['fast']:
+            self.sim_name = "Switch to kNN"
         else:
-            self.sim_menu.add_command(label="Switch to fast kNN", command=master.set_algorithm)
+            self.sim_name = "Switch to FPRS"
+        self.sim_menu.add_command(label=self.sim_name, command=master.set_algorithm)
+        # self.sim_menu.add_command(label=, command=master.set_algorithm)
         self.sim_menu.add_command(label="Edit weights", command=master.weights_window)
         self.root.add_cascade(label="Similarities", menu=self.sim_menu)
         # Configure the menu
         master.config(menu=self.root)
+
+    def callback(self):
+        pass
 
 
 class Interface(tk.Tk):
@@ -194,11 +203,11 @@ class Interface(tk.Tk):
         self.message_box = None
         self.menu = Menu(self)
         welcome = "Welcome \n" \
-            "This CBR-system is designed to give you journey suggestions based " \
+            "This system is designed to give you journey suggestions based " \
             "on your preferences. When you edit your preferences here below and then press " \
-            "the button 'Get best matches', the system will compare your preferences with a given " \
-            "number of cases and bring you the best matches according to similarity calculated in percent.\n " \
-            "For more info and/or help, please use the menu elements."
+            "the button 'Get best matches', the system will compare your preferences with a " \
+            "number of cases and bring you the best matches according to similarity calculated in percent.\n\n " \
+            "If you want more info, edit similarity metrics and/or help, please use the menu elements."
         self.msg = ttk.Label(
             relief=tk.RIDGE,
             wraplength="8i",
@@ -252,18 +261,17 @@ class Interface(tk.Tk):
         )
         self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
         self.status_text = tk.StringVar()
-        self.status_text.set("Copyright Joel Glemne")
+        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using k-NN")
         self.status = ttk.Label(justify="left", padding=(10, 2, 10, 2), textvariable=self.status_text, relief=tk.RAISED)
         self.status.pack(side=tk.BOTTOM, fill='x')
 
     def get_best_matches(self):
-        self.status_text.set("Collecting best matches...")
         self.list.tree.delete(*self.list.tree.get_children())
         self.case_buttons_state("disabled")
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].input, self.target_case)
         self.list.build_tree(self.nr_of_results, self)
-        self.status_text.set("Done")
+        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using k-NN")
 
     def case_buttons_state(self, state):
         self.dc_button.config(state=state)
@@ -410,13 +418,15 @@ class Interface(tk.Tk):
             self.get_best_matches()
 
     def set_algorithm(self):
-        text = 'regular k-NN' if fast else 'fast k-NN'
+        text = 'regular k-NN' if algorithm['fast'] else 'FPRS'
         answer = tkinter.messagebox.askquestion(
             'Set algorithm',
             'Are you sure you want to switch to ' + text + '?'
         )
         if answer == 'yes':
-            fast = False
+            algorithm['fast'] = not algorithm['fast']
+            self.menu.sim_name = 'Switch to k-NN' if algorithm['fast'] else 'Switch to FPRS'
+            self.menu.sim_menu.entryconfigure(0, label=self.menu.sim_name)
             self.get_best_matches()
 
     def weights_window(self):
@@ -701,7 +711,7 @@ class JourneyCase(TargetCase):
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     @classmethod
-    def fast_knn(cls, case):
+    def fprs(cls, case):
         similarities = {}
         key_instances = {}
         key_sims = []
