@@ -169,8 +169,8 @@ def fixed_list(number_of_elements):
     return x
 
 
-def do_geocode(region, geolocator):
+def do_geocode(region, geo_locator):
     try:
-        return geolocator.geocode(region)
+        return geo_locator.geocode(region)
     except GeocoderTimedOut:
-        return do_geocode(region)
+        return do_geocode(region, geo_locator)

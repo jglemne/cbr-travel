@@ -94,9 +94,9 @@ class Region:
         cur.execute("select latitude, longitude from regions where region_name = %s", (region,))
         result = cur.fetchall()
         if len(result) == 0:
-            geolocator = Nominatim()  # TODO: must learn how to use timeout() & catch error
+            geo_locator = Nominatim()  # TODO: must learn how to use timeout() & catch error
             try:
-                location = do_geocode(region, geolocator)
+                location = do_geocode(region, geo_locator)
                 new_longitude = location.longitude
                 new_latitude = location.latitude
                 self.regions[region]['Long'] = new_longitude

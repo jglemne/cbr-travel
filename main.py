@@ -6,7 +6,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
 import tkinter.messagebox
-from globals import fields_global, drop_downs_global
+from globals import fields_global, drop_downs_global, fast
 from tools import *
 from features import *
 
@@ -50,7 +50,10 @@ class MultiColumnListbox:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        for item in JourneyCase.similarities(root.target_case)[0:nr_of_results]:
+        results = JourneyCase.fast_knn(root.target_case) if fast else JourneyCase.knn(root.target_case)
+        if len(results) < nr_of_results:
+            nr_of_results = len(results)
+        for item in results[0:nr_of_results]:
             self.tree.insert('', 'end', values=item[0].case_tuples)
 
     def selection(self, event):
@@ -165,6 +168,10 @@ class Menu:
         self.root.add_cascade(label="Case Base", menu=self.cb_menu)
         # 'Similarities'
         self.sim_menu = tk.Menu(self.root, tearoff=0)
+        if fast:
+            self.sim_menu.add_command(label="Switch to kNN", command=master.set_algorithm)
+        else:
+            self.sim_menu.add_command(label="Switch to fast kNN", command=master.set_algorithm)
         self.sim_menu.add_command(label="Edit weights", command=master.weights_window)
         self.root.add_cascade(label="Similarities", menu=self.sim_menu)
         # Configure the menu
@@ -402,6 +409,16 @@ class Interface(tk.Tk):
             case.delete_case()
             self.get_best_matches()
 
+    def set_algorithm(self):
+        text = 'regular k-NN' if fast else 'fast k-NN'
+        answer = tkinter.messagebox.askquestion(
+            'Set algorithm',
+            'Are you sure you want to switch to ' + text + '?'
+        )
+        if answer == 'yes':
+            fast = False
+            self.get_best_matches()
+
     def weights_window(self):
         self.window = tk.Toplevel(self)
         self.weight_entries = {}
@@ -624,7 +641,7 @@ class JourneyCase(TargetCase):
     codes = {}
     transportations = {}
     max_code = 1470
-    # key_cases = {}
+    key_cases = {}
     list = [
         'Similarity [%]',
         'Case [index]',
@@ -666,15 +683,37 @@ class JourneyCase(TargetCase):
             cls.seasons[season] = season
         if transportation not in cls.transportations:
             cls.transportations[transportation] = transportation
-        # if not bool(cls.key_cases):
-        #     instance.sim_key_cases()
+        if any(cls.key_cases):
+            key_case = instance.sim_key_cases()
+            if key_case is None:
+                cls.key_cases[instance] = {}
+            else:
+                cls.key_cases[key_case][instance] = instance
+        else:
+            cls.key_cases[instance] = {}
         return instance
 
     @classmethod
-    def similarities(cls, case):
+    def knn(cls, case):
         similarities = {}
         for instance in cls.cases:
             similarities[instance] = instance.similarity(case)
+        return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
+
+    @classmethod
+    def fast_knn(cls, case):
+        similarities = {}
+        key_instances = {}
+        key_sims = []
+        for instance in cls.key_cases:
+            similarity = instance.similarity(case)
+            similarity = float("{0:.2f}".format(round(similarity, 2)))
+            key_sims.append(similarity)
+            key_instances[similarity] = instance
+        key_instance = key_instances[max(key_sims)]
+        for inst in cls.key_cases[key_instance]:
+            similarities[inst] = inst.similarity(case)
+        similarities[key_instance] = key_instance.similarity(case)
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
@@ -695,10 +734,15 @@ class JourneyCase(TargetCase):
         self.transportation = Transportation(transportation)
         self.target_case = target_case
         self.similarity(self.target_case)
-    #
-    # def sim_key_cases(self):
-    #     for instance in cls.key_cases:
-    #
+
+    def sim_key_cases(self):
+        key_case = None
+        for instance in self.key_cases:
+            similarity = self.similarity(instance, journey_code="skip", hotel="skip")
+            sim = float("{0:.2f}".format(round(similarity, 2)))
+            if sim >= 0.7:
+                return instance
+        return key_case
 
     def delete_case(self):
         del self.codes[self.journey_code.number]
@@ -747,11 +791,24 @@ class JourneyCase(TargetCase):
     features = property(get_case_features)
     case_tuples = property(get_case_tuple)
 
-    def similarity(self, case):
+    def similarity(
+            self,
+            case,
+            accommodation=None,
+            duration=None,
+            holiday_type=None,
+            hotel=None,
+            journey_code=None,
+            number_of_persons=None,
+            price=None,
+            region=None,
+            season=None,
+            transportation=None
+    ):
         sim_int = 0
         total_weight = 0
         # Accommodation
-        if case.accommodation.name is not None:
+        if (case.accommodation.name is not None) & (accommodation is None):
             weight = self.accommodation.weight
             sim_int += self.accommodation_sim(case) * weight
             total_weight += weight
@@ -759,7 +816,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Duration
-        if case.duration.days is not None:
+        if (case.duration.days is not None) & (duration is None):
             weight = self.duration.weight
             sim_int += self.duration_sim(case) * weight
             total_weight += weight
@@ -767,7 +824,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Holiday type
-        if case.holiday_type.name is not None:
+        if (case.holiday_type.name is not None) & (holiday_type is None):
             weight = self.holiday_type.weight
             sim_int += self.holiday_type_sim(case) * weight
             total_weight += weight
@@ -775,7 +832,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Hotel
-        if case.hotel.name is not None:
+        if (case.hotel.name is not None) & (hotel is None):
             weight = self.hotel.weight
             sim_int += self.hotel_sim(case) * weight
             total_weight += weight
@@ -783,7 +840,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Journey code
-        if case.journey_code.number is not None:
+        if (case.journey_code.number is not None) & (journey_code is None):
             weight = self.journey_code.weight
             sim_int += self.journey_code_sim(case) * weight
             total_weight += weight
@@ -791,7 +848,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Number of persons
-        if case.number_of_persons.total is not None:
+        if (case.number_of_persons.total is not None) & (number_of_persons is None):
             weight = self.number_of_persons.weight
             sim_int += self.number_of_persons_sim(case) * weight
             total_weight += weight
@@ -799,7 +856,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Price
-        if case.price.total is not None:
+        if (case.price.total is not None) & (price is None):
             weight = self.price.weight
             sim_int += self.price_sim(case) * weight
             total_weight += weight
@@ -807,7 +864,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Region
-        if case.region.name is not None:
+        if (case.region.name is not None) & (region is None):
             weight = self.region.weight
             sim_int += self.region_sim(case) * weight
             total_weight += weight
@@ -815,7 +872,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Season
-        if case.season.name is not None:
+        if (case.season.name is not None) & (season is None):
             weight = self.season.weight
             sim_int += self.season_sim(case) * weight
             total_weight += weight
@@ -823,7 +880,7 @@ class JourneyCase(TargetCase):
             sim_int += 1
             total_weight += 1
         # Transportation
-        if case.transportation.similarity is not None:
+        if (case.transportation.similarity is not None) & (transportation is None):
             weight = self.transportation.weight
             sim_int += self.transportation_sim(case) * weight
             total_weight += weight

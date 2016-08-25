@@ -67,3 +67,5 @@ weights_global = {
     'Season': 4,
     'Transportation': 4
 }
+
+fast = True
