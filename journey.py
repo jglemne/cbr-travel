@@ -192,7 +192,14 @@ class Interface(tk.Tk):
             "the button 'Get best matches', the system will compare your preferences with a given " \
             "number of cases and bring you the best matches according to similarity calculated in percent.\n " \
             "For more info and/or help, please use the menu elements."
-        self.msg = ttk.Label(wraplength="8i", justify="center", anchor="n", padding=(10, 10, 10, 10), text=welcome)
+        self.msg = ttk.Label(
+            relief=tk.RIDGE,
+            wraplength="8i",
+            justify="center",
+            anchor="n",
+            padding=(10, 10, 10, 10),
+            text=welcome
+        )
         self.msg.pack(fill='x')
         self.field_frame = tk.Frame(self)
         self.field_frame.pack(side=tk.TOP, pady=(10, 0))
@@ -222,7 +229,7 @@ class Interface(tk.Tk):
         self.button.grid(columnspan=2, pady=(10, 0))
         self.list = MultiColumnListbox(self.nr_of_results, self)
         self.button_frame = tk.Frame(self)
-        self.button_frame.pack(side=tk.BOTTOM)
+        self.button_frame.pack()
         self.ec_button = tk.Button(
             self.button_frame,
             text="Edit case",
@@ -237,14 +244,20 @@ class Interface(tk.Tk):
             command=self.delete_case_message
         )
         self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
+        self.status_text = tk.StringVar()
+        self.status_text.set("Done")
+        self.status = ttk.Label(justify="left", padding=(10, 2, 10, 2), textvariable=self.status_text, relief=tk.RAISED)
+        self.status.pack(side=tk.BOTTOM, fill='x')
         self.target_case = target_case
 
     def get_best_matches(self):
+        self.status_text.set("Collecting best matches...")
         self.list.tree.delete(*self.list.tree.get_children())
         self.case_buttons_state("disabled")
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].input, self.target_case)
         self.list.build_tree(self.nr_of_results)
+        self.status_text.set("Done")
 
     def case_buttons_state(self, state):
         self.dc_button.config(state=state)
