@@ -9,6 +9,7 @@ from geopy.distance import great_circle
 import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
+import tkinter.messagebox
 from globals import fields_global, drop_downs_global
 from tools import *
 from features import *
@@ -22,8 +23,10 @@ def main():
 
 class MultiColumnListbox:
 
-    def __init__(self, nr_of_results):
+    def __init__(self, nr_of_results, root):
+        self.root = root
         self.tree = None
+        self.selected_case = None
         self._setup_widgets()
         self.build_tree(nr_of_results)
 
@@ -32,44 +35,65 @@ class MultiColumnListbox:
         container.pack(fill='both', expand=True, padx=(10, 10), pady=(10, 10))
         # create a treeview with dual scrollbars
         self.tree = ttk.Treeview(columns=JourneyCase.list, show="headings")
-        vsb = ttk.Scrollbar(orient="vertical",
-                            command=self.tree.yview)
-        hsb = ttk.Scrollbar(orient="horizontal",
-                            command=self.tree.xview)
-        self.tree.configure(yscrollcommand=vsb.set,
-                            xscrollcommand=hsb.set)
+        vsb = ttk.Scrollbar(orient="vertical", command=self.tree.yview)
+        hsb = ttk.Scrollbar(orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
         self.tree.grid(column=0, row=0, sticky='nsew', in_=container)
         vsb.grid(column=1, row=0, sticky='ns', in_=container)
         hsb.grid(column=0, row=1, sticky='ew', in_=container)
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
+        self.tree.bind("<Key>", self.selection)
+        self.tree.bind("<ButtonRelease-1>", self.selection)
 
     def build_tree(self, nr_of_results):
         for col in JourneyCase.list:
             self.tree.heading(col, text=col, command=lambda c=col: sortby(self.tree, c, 0))
             # adjust the column's width to the header string
-            self.tree.column(col, width=tkFont.Font().measure(col))
+            if col == 'Hotel name':
+                self.tree.column(col, width=tkFont.Font().measure(col) * 3)
+            else:
+                self.tree.column(col, width=tkFont.Font().measure(col))
         for item in JourneyCase.similarities()[0:nr_of_results]:
             self.tree.insert('', 'end', values=item[0].case_tuples)
-            # adjust column's width if necessary to fit each value
-            # for ix, val in enumerate(item):
-            #     col_w = tkFont.Font().measure(val)
-            #     if self.tree.column(JourneyCase.list[ix], width=None) < col_w:
-            #         self.tree.column(JourneyCase.list[ix], width=col_w)
+
+    def selection(self, event):
+        self.root.case_buttons_state("normal")
+        if event.type == '5':  # mouse click
+            item_id = self.tree.identify_row(event.y)
+            self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
+        elif event.type == '2':
+            if (event.keycode == 8320768) & (self.tree.prev(self.tree.focus()) != ''):  # up
+                item_id = self.tree.prev(self.tree.focus())
+                self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
+            elif (event.keycode == 8255233) & (self.tree.next(self.tree.focus()) != ''):  # down
+                item_id = self.tree.next(self.tree.focus())
+                self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
+            else:
+                pass
+        else:
+            pass
+
+    def get_selected_case(self):
+        return self.selected_case
+
+    case = property(get_selected_case)
 
 
 class Field:
     fields = {}
 
     @classmethod
-    def create(cls, master, label_text, row, col):
-        instance = Field(master, label_text, row, col)
+    def create(cls, master, label_text, row, col, default_value=None):
+        instance = Field(master, label_text, row, col, default_value)
         cls.fields[label_text] = instance
         return instance
 
-    def __init__(self, master, label_text, row, col):
+    def __init__(self, master, label_text, row, col, default_value=None):
         self.label = tk.Label(master, text=label_text)
         self.entry = tk.Entry(master)
+        if default_value is not None:
+            self.entry.insert(tk.END, default_value)
         self.row = row
         self.col = col
 
@@ -87,15 +111,20 @@ class DropDown:
     drop_downs = {}
 
     @classmethod
-    def create(cls, master, label_text, row, col):
-        instance = DropDown(master, label_text, row, col)
+    def create(cls, master, label_text, row, col, default_value=None):
+        instance = DropDown(master, label_text, row, col, default_value)
         cls.drop_downs[label_text] = instance
         return instance
 
-    def __init__(self, master, label_text, row, col):
+    def __init__(self, master, label_text, row, col, default_value=None):
         self.var = tk.StringVar(master)
         self.label = tk.Label(master, text=label_text)
-        self.entry = tk.OptionMenu(master, self.var, *drop_downs_global[label_text])
+        if default_value is not None:
+            variable = tk.StringVar(master)
+            variable.set(default_value)
+            self.entry = tk.OptionMenu(master, self.var, variable.get(), *drop_downs_global[label_text])
+        else:
+            self.entry = tk.OptionMenu(master, self.var, *drop_downs_global[label_text])
         self.row = row
         self.col = col
 
@@ -109,61 +138,224 @@ class DropDown:
     input = property(get_input)
 
 
+class Menu:
+
+    def __init__(self, master):
+        self.root = tk.Menu(master)
+        # 'File'
+        self.file_menu = tk.Menu(self.root, tearoff=0)
+        self.file_menu.add_command(label="About")
+        self.file_menu.add_command(label="Help")
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Quit program", command=master.quit)
+        self.root.add_cascade(label="File", menu=self.file_menu)
+        # 'Case Base'
+        self.cb_menu = tk.Menu(self.root, tearoff=0)
+        self.cb_menu.add_command(label="Show case base")
+        self.cb_menu.add_command(label="Add new case")
+        self.cb_menu.add_command(
+            state="disabled",
+            label="Edit selected case",
+            command=master.edit_case_window
+        )
+        self.cb_menu.add_command(
+            state="disabled",
+            label="Delete selected case",
+            command=master.delete_case_message
+        )
+        self.root.add_cascade(label="Case Base", menu=self.cb_menu)
+        # 'Similarities'
+        self.sim_menu = tk.Menu(self.root, tearoff=0)
+        self.sim_menu.add_command(label="Edit weights", command=master.weights_window)
+        self.root.add_cascade(label="Similarities", menu=self.sim_menu)
+        # Configure the menu
+        master.config(menu=self.root)
+
+
 class Interface(tk.Tk):
     field_row = 0
     field_column = 1
     entries = {}
     nr_of_results = 100
+    edit_entries = {}
+    weight_entries = {}
 
     def __init__(self, target_case):
         tk.Tk.__init__(self)
         self.title('CBR Travel Case')
-        self.menu_frame = tk.Frame(self)
-        self.menu_frame.pack(side=tk.TOP)
-        self.menu = tk.Menu(self.menu_frame)
-        self.file_menu = tk.Menu(self.menu, tearoff=0)
-        self.file_menu.add_command(label="Add new case")
-        self.file_menu.add_command(label="Edit case")
-        self.file_menu.add_command(label="Delete case")
-        self.file_menu.add_command(label="Edit weights")
-        self.file_menu.add_command(label="Close")
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Quit program", command=self.quit)
-        self.menu.add_cascade(label="Case Base", menu=self.file_menu)
-        self.config(menu=self.menu)
-        welcome = "Welcome! \n" \
+        self.window = None
+        self.message_box = None
+        self.menu = Menu(self)
+        welcome = "Welcome \n" \
             "This CBR-system is designed to give you journey suggestions based " \
-            "on your preferences. When you edit your preferences here below and then press" \
-            "'Get best matches', the system will compare your preferences with a given " \
-            "number of cases and bring you the best matches calculated in percent. "
+            "on your preferences. When you edit your preferences here below and then press " \
+            "the button 'Get best matches', the system will compare your preferences with a given " \
+            "number of cases and bring you the best matches according to similarity calculated in percent.\n " \
+            "For more info and/or help, please use the menu elements."
         self.msg = ttk.Label(wraplength="8i", justify="center", anchor="n", padding=(10, 10, 10, 10), text=welcome)
         self.msg.pack(fill='x')
         self.field_frame = tk.Frame(self)
         self.field_frame.pack(side=tk.TOP, pady=(10, 0))
         for field in fields_global:
-            self.entries[field] = Field.create(self.field_frame, field, self.field_row, self.field_column)
+            self.entries[field] = Field.create(
+                self.field_frame,
+                field,
+                self.field_row,
+                self.field_column
+            )
             self.entries[field].make_grid()
             self.field_row += 1
         for drop_down in drop_downs_global:
-            self.entries[drop_down] = DropDown.create(self.field_frame, drop_down, self.field_row, self.field_column)
+            self.entries[drop_down] = DropDown.create(
+                self.field_frame,
+                drop_down,
+                self.field_row,
+                self.field_column
+            )
             self.entries[drop_down].make_grid()
             self.field_row += 1
-        self.button = tk.Button(self.field_frame, text="Get best matches", command=self.on_button)
+        self.field_row = 0
+        self.button = tk.Button(
+            self.field_frame,
+            text="Get best matches",
+            command=self.get_best_matches)
         self.button.grid(columnspan=2, pady=(10, 0))
-        self.list = MultiColumnListbox(self.nr_of_results)
+        self.list = MultiColumnListbox(self.nr_of_results, self)
+        self.button_frame = tk.Frame(self)
+        self.button_frame.pack(side=tk.BOTTOM)
+        self.ec_button = tk.Button(
+            self.button_frame,
+            text="Edit case",
+            state=tk.DISABLED,
+            command=self.edit_case_window
+        )
+        self.ec_button.pack(side=tk.LEFT, pady=(10, 10), padx=(10, 10))
+        self.dc_button = tk.Button(
+            self.button_frame,
+            text="Delete case",
+            state=tk.DISABLED,
+            command=self.delete_case_message
+        )
+        self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
         self.target_case = target_case
 
-    def on_button(self):
+    def get_best_matches(self):
         self.list.tree.delete(*self.list.tree.get_children())
+        self.case_buttons_state("disabled")
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].input, self.target_case)
         self.list.build_tree(self.nr_of_results)
 
+    def case_buttons_state(self, state):
+        self.dc_button.config(state=state)
+        self.ec_button.config(state=state)
+        self.menu.cb_menu.entryconfig("Edit selected case", state=state)
+        self.menu.cb_menu.entryconfig("Delete selected case", state=state)
 
-def donothing(root):
-    filewin = tk.Toplevel(root)
-    # button = tk.Button(filewin, text="Do nothing button")
-    # button.pack()
+    def edit_case_window(self):
+        case = self.list.case
+        self.window = tk.Toplevel(self)
+        self.edit_entries = {}
+        self.window.field_frame = tk.Frame(self.window)
+        self.window.field_frame.pack(side=tk.TOP, pady=(10, 0))
+        for field in fields_global:
+            self.edit_entries[field] = Field.create(
+                self.window.field_frame,
+                field,
+                self.field_row,
+                self.field_column,
+                case.features[field]
+            )
+            self.edit_entries[field].make_grid()
+            self.field_row += 1
+        for drop_down in drop_downs_global:
+            self.edit_entries[drop_down] = DropDown.create(
+                self.window.field_frame,
+                drop_down,
+                self.field_row,
+                self.field_column,
+                case.features[drop_down]
+            )
+            self.edit_entries[drop_down].make_grid()
+            self.field_row += 1
+        self.field_row = 0
+        self.window.button_frame = tk.Frame(self.window)
+        self.window.button_frame.pack(side=tk.BOTTOM)
+        self.window.cancel_button = tk.Button(
+            self.window.button_frame,
+            text="Cancel",
+            state=tk.NORMAL,
+            command=self.window.destroy
+        )
+        self.window.cancel_button.pack(side=tk.LEFT, pady=(10, 10), padx=(10, 10))
+        self.window.apply_button = tk.Button(
+            self.window.button_frame,
+            text="Apply changes",
+            state=tk.NORMAL,
+            command=lambda: self.edit_case(case)
+        )
+        self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
+
+    def edit_case(self, case):
+        self.list.tree.delete(*self.list.tree.get_children())
+        self.case_buttons_state("disabled")
+        for entry in self.edit_entries:
+            set_target_case_feature(entry, self.edit_entries[entry].input, case)
+        self.list.build_tree(self.nr_of_results)
+        self.edit_entries = {}
+        self.window.destroy()
+
+    def delete_case_message(self):
+        answer = tkinter.messagebox.askquestion(
+            'Delete case',
+            'Are you sure you want to delete case ' + str(self.list.case.journey_code.number) + '?'
+        )
+        if answer == 'yes':
+            case = self.list.case
+            case.delete_case()
+            self.get_best_matches()
+
+    def weights_window(self):
+        self.window = tk.Toplevel(self)
+        self.weight_entries = {}
+        self.window.field_frame = tk.Frame(self.window)
+        self.window.field_frame.pack(side=tk.TOP, pady=(10, 0))
+        for weight in weights_global:
+            self.weight_entries[weight] = Field.create(
+                self.window.field_frame,
+                weight,
+                self.field_row,
+                self.field_column,
+                weights_global[weight]
+            )
+            self.weight_entries[weight].make_grid()
+            self.field_row += 1
+        self.field_row = 0
+        self.window.button_frame = tk.Frame(self.window)
+        self.window.button_frame.pack(side=tk.BOTTOM)
+        self.window.cancel_button = tk.Button(
+            self.window.button_frame,
+            text="Cancel",
+            state=tk.NORMAL,
+            command=self.window.destroy
+        )
+        self.window.cancel_button.pack(side=tk.LEFT, pady=(10, 10), padx=(10, 10))
+        self.window.apply_button = tk.Button(
+            self.window.button_frame,
+            text="Apply changes",
+            state=tk.NORMAL,
+            command=self.edit_weights
+        )
+        self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
+
+    def edit_weights(self):
+        for weight in self.weight_entries:
+            entry = self.weight_entries[weight]
+            if self.weight_entries[weight] != '':
+                weights_global[weight] = int(entry.input)
+        self.get_best_matches()
+        self.window.destroy()
+        self.weight_entries = {}
 
 
 class TargetCase:
@@ -322,19 +514,16 @@ class TargetCase:
     t = property(get_transportation, set_transportation, del_transportation)
 
 
-class JourneyCase:
+class JourneyCase(TargetCase):
     cases = {}
-    max_code = 0
     holiday_types = {}
-    holiday_list = []
-    prices = []
-    persons_per_case = []
     price_range = [239, 8007]
     durations = []
     accommodations = {}
     hotels = {}
     regions = {}
     seasons = {}
+    codes = {}
     transportations = {}
     list = [
         'Similarity [%]',
@@ -360,11 +549,9 @@ class JourneyCase:
             price, number_of_persons, region, transportation,
             duration, season, accommodation, hotel, target_case)
         cls.cases[instance] = instance
-        if cls.max_code < int(instance.journey_code.number):
-            cls.max_code = int(instance.journey_code.number)
+        cls.codes[journey_code] = instance
         if holiday_type not in cls.holiday_types:
             cls.holiday_types[holiday_type] = holiday_type
-        cls.persons_per_case.append(instance.number_of_persons.total)
         if accommodation not in cls.accommodations:
             cls.accommodations[accommodation] = accommodation
         if instance.duration.days not in cls.durations:
@@ -377,7 +564,6 @@ class JourneyCase:
             cls.seasons[season] = season
         if transportation not in cls.transportations:
             cls.transportations[transportation] = transportation
-        cls.prices.append(price)
         return instance
 
     @classmethod
@@ -391,6 +577,7 @@ class JourneyCase:
             self, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
+        super().__init__()
         self.accommodation = Accommodation(accommodation)
         self.case = case
         self.duration = Duration(duration)
@@ -404,6 +591,21 @@ class JourneyCase:
         self.transportation = Transportation(transportation)
         self.target_case = target_case
         self.similarity()
+
+    def delete_case(self):
+        del self.codes[self.journey_code.number]
+        del self.cases[self]
+        del self.accommodation
+        del self.duration
+        del self.holiday_type
+        del self.hotel
+        del self.journey_code
+        del self.number_of_persons
+        del self.price
+        del self.region
+        del self.season
+        del self.transportation
+        del self
 
     def get_case_features(self):
         return {
@@ -657,7 +859,7 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
             target_case.ht = feature_entry
         else:
             del target_case.ht
-    elif feature_name == 'Hotel name':
+    elif feature_name == 'Hotel':
         if feature_entry in JourneyCase.hotels:
             target_case.h = feature_entry
         else:

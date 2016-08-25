@@ -1,10 +1,11 @@
 import psycopg2
 from geopy.geocoders import Nominatim
+from globals import weights_global
 
 
 class Accommodation:
     indices = {'HolidayFlat': 1, 'OneStar': 2, 'TwoStars': 3, 'ThreeStars': 4, 'FourStars': 5, 'FiveStars': 6}
-    weight = 3
+    weight = weights_global['Accommodation']
 
     def __init__(self, accommodation=None):
         self.name = accommodation
@@ -12,7 +13,7 @@ class Accommodation:
 
 
 class Duration:
-    weight = 1
+    weight = weights_global['Duration']
 
     def __init__(self, duration=None):
         self.days = duration
@@ -25,7 +26,7 @@ class HolidayType:
         'Wandering': '1000100', 'Adventure': '1001001', 'Diving': '1010001', 'Skiing': '1011001',
         'Surfing': '1100001'
     }
-    weight = 10
+    weight = weights_global['Holiday type']
 
     def __init__(self, holiday_type=None):
         self.name = holiday_type
@@ -33,28 +34,28 @@ class HolidayType:
 
 
 class Hotel:
-    weight = 20
+    weight = weights_global['Hotel']
 
     def __init__(self, hotel=None):
         self.name = hotel
 
 
 class JourneyCode:
-    weight = 200
+    weight = weights_global['Journey code']
 
     def __init__(self, journey_code=None):
         self.number = journey_code
 
 
 class NumberOfPersons:
-    weight = 2
+    weight = weights_global['Number of persons']
 
     def __init__(self, number_of_persons=None):
         self.total = number_of_persons
 
 
 class Price:
-    weight = 7
+    weight = weights_global['Price']
 
     def __init__(self, price=None, number_of_persons=None):
         self.total = price
@@ -65,7 +66,7 @@ class Price:
 
 
 class Region:
-    weight = 2
+    weight = weights_global['Region']
     distance = 2000
     regions = {}
 
@@ -107,7 +108,7 @@ class Region:
 
 
 class Season:
-    weight = 4
+    weight = weights_global['Season']
     seasons = {
         'January': ['Winter', 'Winter'],
         'February': ['Spring', 'Winter'],
@@ -132,7 +133,7 @@ class Season:
 
 
 class Transportation:
-    weight = 4
+    weight = weights_global['Transportation']
     similarities = {
         'Car': [1, 0.5, 0.0, 0.8],
         'Coach': [0.5, 1.0, 0.0, 0.7],
