@@ -16,7 +16,7 @@ import heapq
 def main():
     target_case = TargetCase()
     instance_cases(retrieve_cases(), target_case)
-    # JourneyCase.fprs(target_case)
+    # set_key_case(target_case)
     Interface(target_case).mainloop()
 
 
@@ -53,6 +53,11 @@ class MultiColumnListbox:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
+        # start_time = time.time()
+        # set_key_case(root.target_case)
+        # results = JourneyCase.fprs_new(root.target_case)
+        # print("Execution time new: " + str(time.time() - start_time))
+        # print(results[0][1], results[0][0].journey_code.number)
         start_time = time.time()
         results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
         print("Execution time FPRS: " + str(time.time() - start_time))
@@ -527,7 +532,7 @@ class TargetCase:
     def __init__(
             self, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
-            duration=None, season=None, accommodation=None, hotel=None):
+            duration=None, season=None, accommodation=None, hotel=None, key_case=None):
         self.accommodation = Accommodation(accommodation)
         self.case = case
         self.duration = Duration(duration)
@@ -539,6 +544,7 @@ class TargetCase:
         self.region = Region(region)
         self.season = Season(season)
         self.transportation = Transportation(transportation)
+        self.key_case = key_case
 
     def get_case_list(self):
         return [
@@ -747,10 +753,13 @@ class JourneyCase(TargetCase):
             key_case = instance.sim_key_cases()
             if key_case is None:
                 cls.key_cases[instance] = {}
+                instance.key_case = instance
             else:
                 cls.key_cases[key_case][instance] = instance
+                instance.key_case = key_case
         else:
             cls.key_cases[instance] = {}
+            instance.key_case = instance
         return instance
 
     @classmethod
@@ -787,10 +796,22 @@ class JourneyCase(TargetCase):
         print('Cases considered with fprs: ' + str(nr))
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
+    @classmethod
+    def fprs_new(cls, case):
+        similarities = {}
+        similarities[case.key_case] = case.key_case.similarity(case)
+        nr = 1
+        for instance in cls.key_cases[case.key_case]:
+            similarities[instance] = instance.similarity(case)
+            nr += 1
+        print('Cases considered with new: ' + str(nr))
+        return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
+
     def __init__(
             self, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
-            duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
+            duration=None, season=None, accommodation=None, hotel=None,
+            key_case=None, target_case=TargetCase()):
         super().__init__()
         self.accommodation = Accommodation(accommodation)
         self.case = case
@@ -803,8 +824,9 @@ class JourneyCase(TargetCase):
         self.region = Region(region)
         self.season = Season(season)
         self.transportation = Transportation(transportation)
+        self.key_case = key_case
         self.target_case = target_case
-        self.similarity(self.target_case)
+        # self.similarity(self.target_case)
 
     def sim_key_cases(self):
         key_case = None
@@ -1110,6 +1132,14 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
             del target_case.t
     else:
         pass
+
+
+def set_key_case(target_case):
+    similarities = {}
+    for instance in JourneyCase.key_cases:
+        similarities[instance] = instance.similarity(target_case)
+    sims = sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
+    target_case.key_case = sims[0][0]
 
 
 if __name__ == '__main__':
