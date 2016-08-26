@@ -88,13 +88,14 @@ def hamming_distance(s1, s2):
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
 
-def load_cases_excel(file_name, target_case):
+def get_cases_excel(file_name):
     wb = openpyxl.load_workbook(file_name)
     sheet_names = wb.get_sheet_names()
     sheet_name = sheet_names[0]
     sheet = wb.get_sheet_by_name(sheet_name)
     case_column = 3
     case_row = 1
+    cases = {}
     is_case = True
     while is_case:
         case = [None] * 11
@@ -104,8 +105,15 @@ def load_cases_excel(file_name, target_case):
         else:
             for next_cell in range(2, 13):
                 case[next_cell-2] = sheet.cell(row=case_row + next_cell, column=3).value
-            JourneyCase.create(
-                case[0], case[1], case[2].replace(',', ''), case[3],
-                case[4], case[5].replace(',', ''), case[6].replace(',', ''), case[7],
-                case[8].replace(',', ''), case[9].replace(',', ''), case[10], target_case)
+            case[1] = str(case[1])
+            case[2] = case[2].replace(',', '')
+            case[3] = str(case[3])
+            case[4] = str(case[4])
+            case[5] = case[5].replace(',', '')
+            case[6] = case[6].replace(',', '')
+            case[7] = str(case[7])
+            case[8] = case[8].replace(',', '')
+            case[9] = case[9].replace(',', '')
+            cases[case[1]] = case
         case_row += 16
+    return cases
