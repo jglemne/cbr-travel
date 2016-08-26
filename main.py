@@ -9,18 +9,15 @@ import tkinter.messagebox
 from globals import fields_global, drop_downs_global, algorithm
 from tools import *
 from features import *
-import time
+# import time
 import heapq
 
 
 def main():
-    target_case = TargetCase()
-    instance_cases(retrieve_cases(), target_case)
-    # JourneyCase.fprs(target_case)
-    Interface(target_case).mainloop()
+    App.create().mainloop()
 
 
-class MultiColumnListbox:
+class CaseList:
 
     def __init__(self, nr_of_results, root):
         self.root = root
@@ -47,20 +44,21 @@ class MultiColumnListbox:
 
     def build_tree(self, nr_of_results, root):
         for col in JourneyCase.list:
-            self.tree.heading(col, text=col, command=lambda c=col: sortby(self.tree, c, 0))
+            self.tree.heading(col, text=col, command=lambda c=col: sort_by(self.tree, c, 0))
             # adjust the column's width to the header string
             if col == 'Hotel name':
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        start_time = time.time()
-        results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
-        print("Execution time FPRS: " + str(time.time() - start_time))
-        print(results[0][1], results[0][0].journey_code.number)
-        start_time = time.time()
+        # start_time = time.time()
+        # results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
+        # print("Execution time FPRS: " + str(time.time() - start_time))
+        # print(results[0][1], results[0][0].journey_code.number)
+        # start_time = time.time()
+        # ****** HERE GOES TEST ******
+        # print("Execution time k-NN: " + str(time.time() - start_time))
+        # print(results[0][1], results[0][0].journey_code.number)
         results = JourneyCase.fprs(root.target_case) if algorithm['fast'] else JourneyCase.knn(root.target_case)
-        print("Execution time k-NN: " + str(time.time() - start_time))
-        print(results[0][1], results[0][0].journey_code.number)
         if len(results) < nr_of_results:
             nr_of_results = len(results)
         for item in results[0:nr_of_results]:
@@ -198,13 +196,20 @@ class Menu:
         pass
 
 
-class Interface(tk.Tk):
+class App(tk.Tk):
     field_row = 0
     field_column = 1
     entries = {}
     nr_of_results = 100
     edit_entries = {}
     weight_entries = {}
+
+    @classmethod
+    def create(cls):
+        target_case = TargetCase()
+        instance_cases(retrieve_cases(), target_case)
+        instance = App(target_case)
+        return instance
 
     def __init__(self, target_case):
         tk.Tk.__init__(self)
@@ -255,7 +260,7 @@ class Interface(tk.Tk):
             text="Get best matches",
             command=self.get_best_matches)
         self.button.grid(columnspan=2, pady=(10, 0))
-        self.list = MultiColumnListbox(self.nr_of_results, self)
+        self.list = CaseList(self.nr_of_results, self)
         self.button_frame = tk.Frame(self)
         self.button_frame.pack()
         self.ec_button = tk.Button(
@@ -274,7 +279,12 @@ class Interface(tk.Tk):
         self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
         self.status_text = tk.StringVar()
         self.status_text.set("Using FPRS" if algorithm['fast'] else "Using k-NN")
-        self.status = ttk.Label(justify="left", padding=(10, 2, 10, 2), textvariable=self.status_text, relief=tk.RAISED)
+        self.status = ttk.Label(
+            justify="left",
+            padding=(10, 2, 10, 2),
+            textvariable=self.status_text,
+            relief=tk.RAISED
+        )
         self.status.pack(side=tk.BOTTOM, fill='x')
 
     def get_best_matches(self):
@@ -628,7 +638,10 @@ class TargetCase:
         return self.price.total
 
     def set_price(self, price):
-        self.price = Price(price)
+        if self.number_of_persons is not None:
+            self.price = Price(price, self.number_of_persons.total)
+        else:
+            self.price = Price(price)
 
     def del_price(self):
         del self.price
@@ -755,24 +768,19 @@ class JourneyCase(TargetCase):
 
     @classmethod
     def knn(cls, case):
-        nr = 0
         similarities = {}
         for instance in cls.cases:
             similarities[instance] = instance.similarity(case)
-            nr += 1
-        print('Cases considered with k-NN: ' + str(nr))
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     @classmethod
     def fprs(cls, case):
-        nr = 0
         similarities = {}
         key_instances = {}
         key_sims = []
         multiple_key_instances = {}
         for instance in cls.key_cases:
             similarity = instance.similarity(case)
-            nr += 1
             similarity = float("{0:.2f}".format(round(similarity, 2)))
             key_sims.append(similarity)
             key_instances[similarity] = instance
@@ -782,9 +790,7 @@ class JourneyCase(TargetCase):
         for inst in multiple_key_instances:
             for base_inst in cls.key_cases[inst]:
                 similarities[base_inst] = base_inst.similarity(case)
-                nr += 1
         similarities = merge_dicts(multiple_key_instances, similarities)
-        print('Cases considered with fprs: ' + str(nr))
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
@@ -1006,12 +1012,22 @@ class JourneyCase(TargetCase):
             return 0
 
     def price_sim(self, case):
-        if (self.price.total <= case.price.total) | (case.price.total > self.price_range[1]):
-            return 1
-        elif case.price.total < self.price_range[0]:
-            return 0
+        if case.price.per_person is None:
+            if (self.price.total <= case.price.total) | (case.price.total > self.price_range[1]):
+                return 1
+            elif case.price.total < self.price_range[0]:
+                return 0
+            else:
+                return 1 - ((self.price.total - case.price.total) / (self.price_range[1] - self.price_range[0]))
         else:
-            return 1 - ((self.price.total - case.price.total) / (self.price_range[1] - self.price_range[0]))
+            if (self.price.per_person <= case.price.per_person) | (case.price.per_person > self.price_range[1]):
+                return 1
+            elif case.price.per_person < self.price_range[0]/case.number_of_persons.total:
+                return 0
+            else:
+                case_diff = (self.price.per_person - case.price.per_person)
+                range_diff = (self.price_range[1] - self.price_range[0])/case.number_of_persons.total
+                return 1 - (case_diff / range_diff)
 
     def region_sim(self, case):
         if self.region.name == case.region.name:

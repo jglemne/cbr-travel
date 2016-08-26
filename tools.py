@@ -137,7 +137,7 @@ def commit_regions_to_database(region_tuple):
     conn.commit()
 
 
-def sortby(tree, col, descending):
+def sort_by(tree, col, descending):
     # grab values to sort
     data = [(tree.set(child, col), child) for child in tree.get_children('')]
     # if the data to be sorted is numeric change to float
