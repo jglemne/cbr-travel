@@ -183,7 +183,12 @@ class Menu:
         else:
             self.sim_name = "Switch to FPRS"
         self.sim_menu.add_command(label=self.sim_name, command=master.set_algorithm)
-        # self.sim_menu.add_command(label=, command=master.set_algorithm)
+        self.key_state = 'normal' if algorithm['fast'] else 'disabled'
+        self.sim_menu.add_command(
+            label="Edit number of keys",
+            state=self.key_state,
+            command=master.keys_window
+        )
         self.sim_menu.add_command(label="Edit weights", command=master.weights_window)
         self.root.add_cascade(label="Similarities", menu=self.sim_menu)
         # Configure the menu
@@ -207,6 +212,7 @@ class Interface(tk.Tk):
         self.title('CBR Travel Case')
         self.window = None
         self.message_box = None
+        self.key_entry = None
         self.menu = Menu(self)
         welcome = "Welcome \n" \
             "This system is designed to give you journey suggestions based " \
@@ -434,6 +440,8 @@ class Interface(tk.Tk):
             self.menu.sim_name = 'Switch to k-NN' if algorithm['fast'] else 'Switch to FPRS'
             self.menu.sim_menu.entryconfigure(0, label=self.menu.sim_name)
             self.get_best_matches()
+            algorithm_state = 'normal' if algorithm['fast'] else 'disabled'
+            self.menu.sim_menu.entryconfig("Edit number of keys", state=algorithm_state)
 
     def weights_window(self):
         self.window = tk.Toplevel(self)
@@ -476,6 +484,42 @@ class Interface(tk.Tk):
         self.get_best_matches()
         self.window.destroy()
         self.weight_entries = {}
+
+    def keys_window(self):
+        self.window = tk.Toplevel(self)
+        self.window.key_frame = tk.Frame(self.window)
+        self.window.key_frame.pack(side=tk.TOP, pady=(10, 0))
+        self.key_entry = Field.create(
+            self.window.key_frame,
+            'Current nr of key cases',
+            self.field_row,
+            self.field_column,
+            algorithm['key cases']
+        )
+        self.key_entry.make_grid()
+        self.field_row = 0
+        self.window.button_frame = tk.Frame(self.window)
+        self.window.button_frame.pack(side=tk.BOTTOM)
+        self.window.cancel_button = tk.Button(
+            self.window.button_frame,
+            text="Cancel",
+            state=tk.NORMAL,
+            command=self.window.destroy
+        )
+        self.window.cancel_button.pack(side=tk.LEFT, pady=(10, 10), padx=(10, 10))
+        self.window.apply_button = tk.Button(
+            self.window.button_frame,
+            text="Apply changes",
+            state=tk.NORMAL,
+            command=self.edit_keys
+        )
+        self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
+
+    def edit_keys(self):
+        algorithm['key cases'] = int(self.key_entry.input)
+        self.get_best_matches()
+        self.window.destroy()
+        self.key_entry = None
 
 
 class TargetCase:
