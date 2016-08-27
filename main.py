@@ -9,7 +9,7 @@ import tkinter.messagebox
 from globals import fields_global, drop_downs_global, algorithm
 from tools import *
 from features import *
-# import time
+import time
 import heapq
 
 
@@ -50,15 +50,15 @@ class CaseList:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        # start_time = time.time()
-        # results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
-        # print("Execution time FPRS: " + str(time.time() - start_time))
-        # print(results[0][1], results[0][0].journey_code.number)
-        # start_time = time.time()
-        # ****** HERE GOES TEST ******
-        # print("Execution time k-NN: " + str(time.time() - start_time))
-        # print(results[0][1], results[0][0].journey_code.number)
+        start_time = time.time()
         results = JourneyCase.fprs(root.target_case) if algorithm['fast'] else JourneyCase.knn(root.target_case)
+        nr = 0
+        for key_case in JourneyCase.key_cases:
+            nr += 1
+            print('Number of key cases in each group: ' + str(len(JourneyCase.key_cases[key_case])))
+        print('Nr of key cases: ' + str(nr))
+        print("Execution time: " + str(time.time() - start_time))
+        print(results[0][1], results[0][0].journey_code.number)
         if len(results) < nr_of_results:
             nr_of_results = len(results)
         for item in results[0:nr_of_results]:
@@ -776,12 +776,14 @@ class JourneyCase(TargetCase):
 
     @classmethod
     def fprs(cls, case):
+        nr = 0
         similarities = {}
         key_instances = {}
         key_sims = []
         multiple_key_instances = {}
         for instance in cls.key_cases:
             similarity = instance.similarity(case)
+            nr += 1
             similarity = float("{0:.2f}".format(round(similarity, 2)))
             key_sims.append(similarity)
             key_instances[similarity] = instance
@@ -791,28 +793,10 @@ class JourneyCase(TargetCase):
         for inst in multiple_key_instances:
             for base_inst in cls.key_cases[inst]:
                 similarities[base_inst] = base_inst.similarity(case)
+                nr += 1
         similarities = merge_dicts(multiple_key_instances, similarities)
+        print('Nr of cases considered: ' + str(nr))
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
-    #
-    # @classmethod
-    # def fprs_new(cls, case):
-    #     similarities = {}
-    #     key_instances = {}
-    #     key_sims = []
-    #     multiple_key_instances = {}
-    #     for instance in cls.key_cases:
-    #         similarity = instance.similarity(case)
-    #         similarity = float("{0:.2f}".format(round(similarity, 2)))
-    #         key_sims.append(similarity)
-    #         key_instances[similarity] = instance
-    #     keys = heapq.nlargest(algorithm['key cases'], key_sims)
-    #     for key in keys:
-    #         multiple_key_instances[key_instances[key]] = key
-    #     for inst in multiple_key_instances:
-    #         for base_inst in cls.key_cases[inst]:
-    #             similarities[base_inst] = base_inst.similarity(case)
-    #     similarities = merge_dicts(multiple_key_instances, similarities)
-    #     return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
             self, case=None, journey_code=None, holiday_type=None,
@@ -838,7 +822,7 @@ class JourneyCase(TargetCase):
         for instance in self.key_cases:
             similarity = self.similarity(instance, journey_code="skip", hotel="skip")
             sim = float("{0:.2f}".format(round(similarity, 2)))
-            if sim >= 0.75:
+            if sim >= 0.72:
                 key_cases[instance] = instance
         return key_cases
 
