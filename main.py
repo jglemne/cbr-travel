@@ -757,11 +757,12 @@ class JourneyCase(TargetCase):
         if transportation not in cls.transportations:
             cls.transportations[transportation] = transportation
         if any(cls.key_cases):
-            key_case = instance.sim_key_cases()
-            if key_case is None:
+            key_cases = instance.sim_key_cases()
+            if len(key_cases) == 0:
                 cls.key_cases[instance] = {}
             else:
-                cls.key_cases[key_case][instance] = instance
+                for key_case in key_cases:
+                    cls.key_cases[key_case][instance] = instance
         else:
             cls.key_cases[instance] = {}
         return instance
@@ -792,6 +793,26 @@ class JourneyCase(TargetCase):
                 similarities[base_inst] = base_inst.similarity(case)
         similarities = merge_dicts(multiple_key_instances, similarities)
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
+    #
+    # @classmethod
+    # def fprs_new(cls, case):
+    #     similarities = {}
+    #     key_instances = {}
+    #     key_sims = []
+    #     multiple_key_instances = {}
+    #     for instance in cls.key_cases:
+    #         similarity = instance.similarity(case)
+    #         similarity = float("{0:.2f}".format(round(similarity, 2)))
+    #         key_sims.append(similarity)
+    #         key_instances[similarity] = instance
+    #     keys = heapq.nlargest(algorithm['key cases'], key_sims)
+    #     for key in keys:
+    #         multiple_key_instances[key_instances[key]] = key
+    #     for inst in multiple_key_instances:
+    #         for base_inst in cls.key_cases[inst]:
+    #             similarities[base_inst] = base_inst.similarity(case)
+    #     similarities = merge_dicts(multiple_key_instances, similarities)
+    #     return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
             self, case=None, journey_code=None, holiday_type=None,
@@ -813,13 +834,13 @@ class JourneyCase(TargetCase):
         self.similarity(self.target_case)
 
     def sim_key_cases(self):
-        key_case = None
+        key_cases = {}
         for instance in self.key_cases:
             similarity = self.similarity(instance, journey_code="skip", hotel="skip")
             sim = float("{0:.2f}".format(round(similarity, 2)))
             if sim >= 0.75:
-                return instance
-        return key_case
+                key_cases[instance] = instance
+        return key_cases
 
     def delete_case(self):
         del self.codes[self.journey_code.number]
