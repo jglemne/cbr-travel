@@ -53,11 +53,11 @@ class MultiColumnListbox:
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        # start_time = time.time()
-        # set_key_case(root.target_case)
-        # results = JourneyCase.fprs_new(root.target_case)
-        # print("Execution time new: " + str(time.time() - start_time))
-        # print(results[0][1], results[0][0].journey_code.number)
+        start_time = time.time()
+        set_key_case(root.target_case)
+        results = JourneyCase.fprs_new(root.target_case)
+        print("Execution time new: " + str(time.time() - start_time))
+        print(results[0][1], results[0][0].journey_code.number)
         start_time = time.time()
         results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
         print("Execution time FPRS: " + str(time.time() - start_time))
@@ -69,7 +69,8 @@ class MultiColumnListbox:
         if len(results) < nr_of_results:
             nr_of_results = len(results)
         for item in results[0:nr_of_results]:
-            self.tree.insert('', 'end', values=item[0].case_tuples)
+            values = (float("{0:.2f}".format(round(item[1]*100, 2))),) + item[0].case_tuples
+            self.tree.insert('', 'end', values=values)
 
     def selection(self, event):
         self.root.case_buttons_state("normal")
@@ -868,7 +869,6 @@ class JourneyCase(TargetCase):
 
     def get_case_tuple(self):
         return (
-            "{0:.2f}".format(round(self.similarity(self.target_case)*100, 2)),
             self.journey_code.number,
             self.holiday_type.name,
             self.price.total,
