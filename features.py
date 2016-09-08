@@ -1,13 +1,12 @@
 import psycopg2
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderServiceError
-from globals import weights_global, adaptables
+from globals import adaptables
 from tools import do_geocode
 
 
 class Accommodation:
     indices = {'HolidayFlat': 1, 'OneStar': 2, 'TwoStars': 3, 'ThreeStars': 4, 'FourStars': 5, 'FiveStars': 6}
-    weight = weights_global['Accommodation']
     adaptable = adaptables['Accommodation']
 
     def __init__(self, accommodation=None):
@@ -16,7 +15,6 @@ class Accommodation:
 
 
 class Duration:
-    weight = weights_global['Duration']
     adaptable = adaptables['Duration']
 
     def __init__(self, duration=None):
@@ -30,7 +28,6 @@ class HolidayType:
         'Wandering': '1000100', 'Adventure': '1001001', 'Diving': '1010001', 'Skiing': '1011001',
         'Surfing': '1100001'
     }
-    weight = weights_global['Holiday type']
     adaptable = adaptables['Holiday type']
 
     def __init__(self, holiday_type=None):
@@ -39,7 +36,6 @@ class HolidayType:
 
 
 class Hotel:
-    weight = weights_global['Hotel']
     adaptable = adaptables['Hotel']
 
     def __init__(self, hotel=None):
@@ -47,7 +43,7 @@ class Hotel:
 
 
 class JourneyCode:
-    weight = weights_global['Journey code']
+    # weight = weights_global['Journey code']
     adaptable = adaptables['Journey code']
 
     def __init__(self, journey_code=None):
@@ -55,7 +51,6 @@ class JourneyCode:
 
 
 class NumberOfPersons:
-    weight = weights_global['Number of persons']
     adaptable = adaptables['Number of persons']
 
     def __init__(self, number_of_persons=None):
@@ -63,7 +58,6 @@ class NumberOfPersons:
 
 
 class Price:
-    weight = weights_global['Price']
     adaptable = adaptables['Price']
 
     def __init__(self, price=None, number_of_persons=None):
@@ -75,7 +69,6 @@ class Price:
 
 
 class Region:
-    weight = weights_global['Region']
     adaptable = adaptables['Region']
     distance = 2000
     regions = {}
@@ -120,7 +113,6 @@ class Region:
 
 
 class Season:
-    weight = weights_global['Season']
     adaptable = adaptables['Season']
     seasons = {
         'January': ['Winter', 'Winter'],
@@ -146,7 +138,6 @@ class Season:
 
 
 class Transportation:
-    weight = weights_global['Transportation']
     adaptable = adaptables['Transportation']
     similarities = {
         'Car': [1, 0.5, 0.0, 0.8],
@@ -178,6 +169,18 @@ class Weights:
     }
 
     def __init__(self):
+        self.accommodation = self.integers['Accommodation']
+        self.duration = self.integers['Duration']
+        self.holiday_type = self.integers['Holiday type']
+        self.hotel = self.integers['Hotel']
+        self.journey_code = self.integers['Journey code']
+        self.number_of_persons = self.integers['Number of persons']
+        self.price = self.integers['Price']
+        self.region = self.integers['Region']
+        self.season = self.integers['Season']
+        self.transportation = self.integers['Transportation']
+
+    def set_weights(self):
         self.accommodation = self.integers['Accommodation']
         self.duration = self.integers['Duration']
         self.holiday_type = self.integers['Holiday type']

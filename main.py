@@ -207,8 +207,8 @@ class App(tk.Tk):
     @classmethod
     def create(cls):
         weights = Weights()
-        target_case = TargetCase()
-        instance_cases(retrieve_cases(), target_case)
+        target_case = TargetCase(weights=weights)
+        instance_cases(retrieve_cases(), target_case, weights)
         instance = App(target_case, weights)
         return instance
 
@@ -460,13 +460,13 @@ class App(tk.Tk):
         self.weight_entries = {}
         self.window.field_frame = tk.Frame(self.window)
         self.window.field_frame.pack(side=tk.TOP, pady=(10, 0))
-        for weight in weights_global:
+        for weight in self.weights.integers:
             self.weight_entries[weight] = Field.create(
                 self.window.field_frame,
                 weight,
                 self.field_row,
                 self.field_column,
-                weights_global[weight]
+                self.weights.integers[weight]
             )
             self.weight_entries[weight].make_grid()
             self.field_row += 1
@@ -492,7 +492,8 @@ class App(tk.Tk):
         for weight in self.weight_entries:
             entry = self.weight_entries[weight]
             if self.weight_entries[weight] != '':
-                weights_global[weight] = int(entry.input)
+                self.weights.integers[weight] = int(entry.input)
+        self.weights.set_weights()
         self.get_best_matches()
         self.window.destroy()
         self.weight_entries = {}
@@ -537,9 +538,10 @@ class App(tk.Tk):
 class TargetCase:
 
     def __init__(
-            self, case=None, journey_code=None, holiday_type=None,
+            self, weights=None, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None):
+        self.weights = weights
         self.accommodation = Accommodation(accommodation)
         self.case = case
         self.duration = Duration(duration)
@@ -733,11 +735,11 @@ class JourneyCase(TargetCase):
 
     @classmethod
     def create(
-            cls, case, journey_code, holiday_type,
+            cls, weights, case, journey_code, holiday_type,
             price, number_of_persons, region, transportation,
             duration, season, accommodation, hotel, target_case):
         instance = JourneyCase(
-            case, journey_code, holiday_type,
+            weights, case, journey_code, holiday_type,
             price, number_of_persons, region, transportation,
             duration, season, accommodation, hotel, target_case)
         cls.cases[instance] = instance
@@ -796,10 +798,11 @@ class JourneyCase(TargetCase):
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
     def __init__(
-            self, case=None, journey_code=None, holiday_type=None,
+            self, weights=None, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
-            duration=None, season=None, accommodation=None, hotel=None, target_case=TargetCase()):
+            duration=None, season=None, accommodation=None, hotel=None, target_case=None):
         super().__init__()
+        self.weights = weights
         self.accommodation = Accommodation(accommodation)
         self.case = case
         self.duration = Duration(duration)
@@ -888,7 +891,7 @@ class JourneyCase(TargetCase):
         total_weight = 0
         # Accommodation
         if (case.accommodation.name is not None) & (accommodation is None):
-            weight = self.accommodation.weight
+            weight = self.weights.accommodation
             sim_int += self.accommodation_sim(case) * weight
             total_weight += weight
         else:
@@ -896,7 +899,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Duration
         if (case.duration.days is not None) & (duration is None):
-            weight = self.duration.weight
+            weight = self.weights.duration
             sim_int += self.duration_sim(case) * weight
             total_weight += weight
         else:
@@ -904,7 +907,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Holiday type
         if (case.holiday_type.name is not None) & (holiday_type is None):
-            weight = self.holiday_type.weight
+            weight = self.weights.holiday_type
             sim_int += self.holiday_type_sim(case) * weight
             total_weight += weight
         else:
@@ -912,7 +915,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Hotel
         if (case.hotel.name is not None) & (hotel is None):
-            weight = self.hotel.weight
+            weight = self.weights.hotel
             sim_int += self.hotel_sim(case) * weight
             total_weight += weight
         else:
@@ -920,7 +923,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Journey code
         if (case.journey_code.number is not None) & (journey_code is None):
-            weight = self.journey_code.weight
+            weight = self.weights.journey_code
             sim_int += self.journey_code_sim(case) * weight
             total_weight += weight
         else:
@@ -928,7 +931,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Number of persons
         if (case.number_of_persons.total is not None) & (number_of_persons is None):
-            weight = self.number_of_persons.weight
+            weight = self.weights.number_of_persons
             sim_int += self.number_of_persons_sim(case) * weight
             total_weight += weight
         else:
@@ -936,7 +939,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Price
         if (case.price.total is not None) & (price is None):
-            weight = self.price.weight
+            weight = self.weights.price
             sim_int += self.price_sim(case) * weight
             total_weight += weight
         else:
@@ -944,7 +947,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Region
         if (case.region.name is not None) & (region is None):
-            weight = self.region.weight
+            weight = self.weights.region
             sim_int += self.region_sim(case) * weight
             total_weight += weight
         else:
@@ -952,7 +955,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Season
         if (case.season.name is not None) & (season is None):
-            weight = self.season.weight
+            weight = self.weights.season
             sim_int += self.season_sim(case) * weight
             total_weight += weight
         else:
@@ -960,7 +963,7 @@ class JourneyCase(TargetCase):
             total_weight += 1
         # Transportation
         if (case.transportation.similarity is not None) & (transportation is None):
-            weight = self.transportation.weight
+            weight = self.weights.transportation
             sim_int += self.transportation_sim(case) * weight
             total_weight += weight
         else:
@@ -1063,11 +1066,11 @@ class JourneyCase(TargetCase):
         return case.transportation.similarity[self.transportation.similarity.index(1.0)]
 
 
-def instance_cases(cases, target_case):
+def instance_cases(cases, target_case, weights):
     for case in cases:
         case = list(case)
         JourneyCase.create(
-            case[1], case[0], case[3], int(case[4]),
+            weights, case[1], case[0], case[3], int(case[4]),
             int(case[5]), case[6], case[7], int(case[8]),
             case[9], case[10], case[11], target_case)
 

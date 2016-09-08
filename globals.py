@@ -55,19 +55,6 @@ drop_downs_global = {
     ]
 }
 
-weights_global = {
-    'Accommodation': 3,
-    'Duration': 1,
-    'Holiday type': 10,
-    'Hotel': 20,
-    'Journey code': 200,
-    'Number of persons': 2,
-    'Price': 7,
-    'Region': 2,
-    'Season': 4,
-    'Transportation': 4
-}
-
 algorithm = {
     'fast': False,
     'adapt': False,
