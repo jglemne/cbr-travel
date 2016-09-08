@@ -156,7 +156,70 @@ When considering a vacation option, the accommodation type is normally considere
 
 \subsection{Case name}
 
-Since the case name by definition is unique for each case, e.g. \textit{Journey984}, and really does not give any information about the case, this feature does
+Since the case name by definition is unique for each case, e.g. \textit{Journey984}, and really does not give any information about the case, this feature is not considered in the similarity metrics. It is however interesting to save it in the database since it is then very easy to search for the given case.
+
+\subsection{Duration}
+
+Duration of a vacation is most of the time adjusted according to the number of vacation days you are given by your employer, which makes this feature quite important for the selection of vacation. The more interesting discussion is rather how adaptable this feature is, a discussion more thoroughly dealt with in an own section here below; \textit{Adaptation discussion}.
+
+\subsubsection{Local similarity function}
+
+If the duration in the given target case, $D(target\,case)$, is exactly the same as the one in the source case, $D(source\,case)$, the similarity $sim_{dur}$ is set equal to 1. For other source cases, where the difference between the compared cases durations are less than or equal to 5, the similarity is calculated as: $$sim_{dur}=\frac{5-(D(target\,case)-D(source\,case))}{5}$$
+For cases where the difference is larger than 5 days, $sim_{dur}=0$.
+
+\subsubsection{Feature weight}
+
+Since this feature is considered to be fairly adaptable, the feature is given a correspondingly low weight of 2. 
+
+\subsubsection{Adaptation discussion}
+
+In this application, it is supposed that the duration could be adapted by the accommodation provider but that is rather reflected in how the price similarity is calculated. For more info, see the feature section \textit{Price}. 
+
+\subsection{Holiday type}
+
+The holiday type has a couple of different possible values, all given in one of the lecture slides. In this application all these different types are entered into a taxonomy tree according to Figure~\ref{fig:taxonomy-tree-ht.png} here below.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1\textwidth]{taxonomy-tree-ht.png}
+\caption{\label{fig:taxonomy-tree-ht.png}Taxonomy tree for holiday types}
+\end{figure}
+
+\subsubsection{Local similarity function}
+
+What the tree says, is that if you for example are comparing \textit{Diving} with \textit{Surfing}, the similarity will be equal to $0.5$, but if you are comparing \textit{Diving} with for example \textit{Shopping} or any other feature value outside of the same group, the similarity will be $0.3$.
+
+\subsubsection{Feature weight}
+
+With the exception of hotel name and journey code, holiday type is in this program considered to be the most important feature and is given the high value of 10. The reasoning behind this is that one normally first consider what the purpose or main activity during the trip will be and then consider place and everything else. These assumptions are based on personal common knowledge and very informal interviews with friends. 
+
+\subsection{Hotel}
+
+This feature is simply the name of the hotel given in the case. 
+
+\subsubsection{Local similarity function}
+
+Since the hotel names really does not say anything about the standard of the hotel or any other features, this is considered a fairly unimportant feature for one who considers different options for a vacation and does not have a certain hotel in mind. That is why if the exact hotel name is entered, then the similiarity will be equal to 1, otherwise it will be equal to 0. 
+
+\subsubsection{Feature weight}
+
+Would the case be that one has heard that a certain hotel is considered to be really good or if one has stayed at a certain hotel before, than perhaps it is likely that the hotel name will be requested. Would that be the case, it certainly should be prioritized when actually entering the name of the hotel. It has therefore been given the high weight of 20. 
+
+\subsection{Journey code}
+
+The journey code is only an integer, mostly used as an id of the case. Would the case be that one is searching for a specific case, the similarity will be 1 if the query is the same, otherwise it will be 0. Since this only would be used to find a single certain case, the weight is assigned the extreme value of 200, just to be sure that the certain case is found. 
+
+\subsection{Number of persons}
+
+The feature \textit{Number of persons} is exactly what it sounds like. This is most of the time something that is not really adjustable when considering different vacation options, but it is at many hotels adaptable so that it may suit the customer. As said before, the thing one really is looking for is the price per person per day. This will be covered in the feature section \textit{Price}. 
+
+\subsubsection{Local similarity function}
+
+The similarity for number of persons is calculated in the exact same way as the duration. 
+
+\subsubsection{Feature weight}
+
+With the same reasoning as with duration, weight also here is set to 2. 
 
 \subsection{Sections}
 
@@ -170,14 +233,7 @@ Comments can be added to the margins of the document using the \todo{Here's a co
 
 \subsection{Tables and Figures}
 
-Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the files menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:frog} below.
-
-% Commands to include a figure:
-%\begin{figure}
-%\centering
-%\includegraphics[width=0.5\textwidth]{frog.jpg}
-%\caption{\label{fig:uoa-logo}This is a figure caption.}
-%\end{figure}
+Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. 
 
 %\begin{table}
 %\centering

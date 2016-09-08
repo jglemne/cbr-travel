@@ -95,7 +95,7 @@ class Region:
         cur.execute("select latitude, longitude from regions where region_name = %s", (region,))
         result = cur.fetchall()
         if len(result) == 0:
-            geo_locator = Nominatim()  # TODO: must learn how to use timeout() & catch error
+            geo_locator = Nominatim()
             try:
                 location = do_geocode(region, geo_locator)
                 new_longitude = location.longitude
@@ -157,7 +157,7 @@ class Transportation:
 class Weights:
     integers = {
         'Accommodation': 3,
-        'Duration': 1,
+        'Duration': 2,
         'Holiday type': 10,
         'Hotel': 20,
         'Journey code': 200,

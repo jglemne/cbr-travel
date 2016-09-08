@@ -1012,8 +1012,12 @@ class JourneyCase(TargetCase):
     def number_of_persons_sim(self, case):
         if self.number_of_persons.total == case.number_of_persons.total:
             return 1
-        elif abs(self.number_of_persons.total - case.number_of_persons.total) < 2:
-            return 0.5
+        # elif abs(self.number_of_persons.total - case.number_of_persons.total) < 2:
+        #     return 0.5
+        # else:
+        #     return 0
+        elif abs(self.number_of_persons.total - case.number_of_persons.total) <= 4:
+            return (5 - abs(self.number_of_persons.total - case.number_of_persons.total)) / 5
         else:
             return 0
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.8.20)  8 SEP 2016 20:19
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.8.20)  9 SEP 2016 00:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -567,31 +567,41 @@ Underfull \hbox (badness 10000) in paragraph at lines 101--103
 
  []
 
-[2] [3] [4]
+[2] [3] [4] <taxonomy-tree-ht.png, id=35, 1280.785pt x 511.9125pt>
+File: taxonomy-tree-ht.png Graphic file (type png)
 
-LaTeX Warning: Reference `tab:widgets' on page 5 undefined on input line 173.
+<use taxonomy-tree-ht.png>
+Package pdftex.def Info: taxonomy-tree-ht.png used on input line 184.
+(pdftex.def)             Requested size: 390.0pt x 155.87141pt.
 
 
-LaTeX Warning: Reference `fig:frog' on page 5 undefined on input line 173.
+LaTeX Warning: `h' float specifier changed to `ht'.
 
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 209.
+[5] [6 <./taxonomy-tree-ht.png>] [7]
+
+LaTeX Warning: Reference `tab:widgets' on page 8 undefined on input line 236.
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 265.
 
 (/usr/local/texlive/2016/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 209.
- [5] [6]
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 265.
+ [8] [9]
 (./cbr-report.aux)
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
  ) 
 Here is how much of TeX's memory you used:
- 13287 strings out of 493014
- 263145 string characters out of 6133351
- 317539 words of memory out of 5000000
- 16553 multiletter control sequences out of 15000+600000
+ 13292 strings out of 493014
+ 263280 string characters out of 6133351
+ 317544 words of memory out of 5000000
+ 16557 multiletter control sequences out of 15000+600000
  11680 words of font info for 41 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  62i,9n,80p,552b,704s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -606,10 +616,10 @@ local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/lo
 cal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local
 /texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/
 texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-Output written on cbr-report.pdf (7 pages, 167377 bytes).
+Output written on cbr-report.pdf (10 pages, 193569 bytes).
 PDF statistics:
- 78 PDF objects out of 1000 (max. 8388607)
- 55 compressed objects within 1 object stream
+ 89 PDF objects out of 1000 (max. 8388607)
+ 61 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 18 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 23 words of extra memory for PDF output out of 10000 (max. 10000000)
 
