@@ -161,3 +161,30 @@ class Transportation:
             self.similarity = self.similarities[transportation]
         else:
             self.similarity = None
+
+
+class Weights:
+    integers = {
+        'Accommodation': 3,
+        'Duration': 1,
+        'Holiday type': 10,
+        'Hotel': 20,
+        'Journey code': 200,
+        'Number of persons': 2,
+        'Price': 7,
+        'Region': 2,
+        'Season': 4,
+        'Transportation': 4
+    }
+
+    def __init__(self):
+        self.accommodation = self.integers['Accommodation']
+        self.duration = self.integers['Duration']
+        self.holiday_type = self.integers['Holiday type']
+        self.hotel = self.integers['Hotel']
+        self.journey_code = self.integers['Journey code']
+        self.number_of_persons = self.integers['Number of persons']
+        self.price = self.integers['Price']
+        self.region = self.integers['Region']
+        self.season = self.integers['Season']
+        self.transportation = self.integers['Transportation']

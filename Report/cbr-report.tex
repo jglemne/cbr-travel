@@ -2,6 +2,7 @@
 %	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 
+
 \documentclass[12pt]{article}
 \usepackage[english]{babel}
 \usepackage[utf8x]{inputenc}
@@ -75,14 +76,87 @@ Joel Glemne
 Your abstract.
 \end{abstract}
 
-\section{Introduction}
+\section{Introduction to CBR}
 
-Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
+This section is divided into three sections; one giving an everyday life example with the purpose of giving an intuitive understanding of case-based reasoning (\textbf{CBR}), one section with a more theoretically general description followed by a mathematical description of the global similarity metrics. 
 
-If you have a question, please use the support box in the bottom right of the screen to get in touch. 
+\subsection{Intuitive approach}
 
-\section{Some \LaTeX{} Examples}
-\label{sec:examples}
+In your everyday life you meet many small problems that you probably would consider quite simple. Let us imagine that you are at your boyfriend's house for the first time, having dinner with his family. The mother asks you to go fetch one more plate. What do you do?
+
+If it was me, I would first go to the kitchen. Then, I would start to look around if I see any \textit{obvious} place for the plates to be (be sure to notice the word \textit{obvious} for later). After that, I would start looking in the cabins. What is then funny, is that the possibility of me finding the right cabin on the first try would be high. How is that possible? 
+
+The reason why, is that we often base our decisions on previous \textit{experiences} and the outcome of those experiences. I have been to a lot of kitchens before and it is common that different families - at least families from the same culture - organize their kitchens in similar ways. What I did, was simply evaluating (\textbf{reasoning}) my \textbf{base} of previous experiences (\textbf{cases}) in order to find a similar solution for the given problem. 
+
+\subsection{General approach}
+
+CBR is mainly a technique for solving a large varieties of problems. Though, to fully understand the concept of CBR it is important to explain the meanings of \textit{case-base} and \textit{reasoning}.
+
+A \textit{case-base} is a collection of experienced solutions to similar problems. \textit{Reasoning} is the procedure of drawing conclusions based on previous cases in order to solve a given problem. It is, however, important to note that it is not necessary to find an exact replica of the considered problem in order to find a solution, but only a \textit{similar} problem. What is then important in the CBR methodology is how to decide what \textit{similar} means. 
+
+In the example in section 1.1 the word \textit{obvious} was used. What obvious means is basically that the given case problem is very similar to a, or several, previous experienced case(s). For humans, it might seem easy to compare different cases and identify all key \textit{features} in an instant, but for a computer it is crucial to pre-identify key features, define and assign similarity metrics to each feature and then organize everything into a reusable model for comparing different cases and predict outcome. 
+
+\subsection{Mathematical approach}
+
+The similarity between two cases is calculated according to the k-nearest neighbors algorithm explained here below. \\\\
+Assume a case-base of $n$ cases $y_i$ where $i=1,2,...\,,n$ and each case having the same $m$ pre-defined features with different values. For each feature a \textit{local} similarity function $sim_j$ is defined where $j=1,2,...\,,m$. The functions takes two arbitrary cases $a,b$ as arguments so that $0 \leq sim_j(a,b) \leq 1$. Every feature is also assigned a weight $\omega_j$ which corresponds to the \textit{local} simililarity's importance to the \textit{global} similarity. 
+
+When comparing an arbitrary \textbf{target case} $x$ with all the \textbf{source cases} in the assumed case-base, $n$ \textit{global} similarities $S_i$ are produced where $0 \leq S_i \leq 1$. $S_i$ is defined as $$S_i=\frac{s_i}{W}$$ where $$s_i=\sum_{1}^{j=m} (\omega_j * sim_j(x,y_i))$$ and $$W=\sum_{1}^{j=m}\omega_j$$
+In order to find the most similar cases in the case-base, the cases $y_i$ corresponding to the highest global similarities $S_i$ are chosen. 
+
+One of the most interesting things in this algorithm is how the local similarity functions $sim_j$ are defined individually. This is what is handled in the next section of this report. 
+
+
+\section{Features}
+
+In this section, all the local similarity functions for the given case-base are presented and motivated. 
+
+As described in section 1.3, every case has a couple of pre-defined \textit{features} or \textit{variables}. In this application the cases considered are different options for travel plans and they all have the following features:
+
+\begin{enumerate}
+\item Accommodation
+\item Case name
+\item Duration
+\item Holiday type
+\item Hotel
+\item Journey code
+\item Number of persons
+\item Price
+\item Region
+\item Season
+\item Transportation
+\end{enumerate}
+
+Every feature has its own local similarity function, producing values within a range of $[0,1]$, and an assigned weight within the range $[1,\infty[$. If a feature is considered important for the global similarity calculation, it is assigned a high value and vice versa. 
+
+\subsection{Accommodation}
+
+The possible values for the accommodation feature were: 
+
+\begin{enumerate}
+\item HolidayFlat
+\item OneStar
+\item TwoStars
+\item ThreeStars
+\item FourStars
+\item FiveStars
+\end{enumerate}
+
+\subsubsection{Local similarity function}
+
+To calculate the local similarity of accommodation between two arbitrary cases, some sort of ranking was here needed. 
+In this case, HolidayFlat was considered the least exclusive kind of accommodation and thereafter rising with number of stars. All of the feature values were therefore assigned an integer value $I_{acc}$ corresponding to above given table numbers, e.g. for an arbitrary case $a$ which has the feature value TwoStars, $I_{acc}(a)=3$. 
+
+In order to produce a similarity $sim_{acc}$ so that $0 \leq sim_{acc} \leq 1$, it was here assumed a \textit{more-is-perfect} approach with a linear calculation of the similarity. This means, that if $I_{acc}(target\,case) \leq I_{acc}(source\,case)$, then $sim_{acc}=1$. Otherwise, the similarity is calculated as $$sim_{acc}=\frac{range-(I_{acc}(target\,case)-I_{acc}(source\,case))}{range}$$
+where $range=6-1=5$.
+
+\subsubsection{Feature weight}
+
+When considering a vacation option, the accommodation type is normally considered a feature which gives an extra bonus to the experience rather than being a feature vital for the selection. Therefore, the accommodation feature is given a relatively low weight of 3. 
+
+\subsection{Case name}
+
+Since the case name by definition is unique for each case, e.g. \textit{Journey984}, and really does not give any information about the case, this feature does
 
 \subsection{Sections}
 
@@ -99,21 +173,21 @@ Comments can be added to the margins of the document using the \todo{Here's a co
 Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the files menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:frog} below.
 
 % Commands to include a figure:
-\begin{figure}
-\centering
+%\begin{figure}
+%\centering
 %\includegraphics[width=0.5\textwidth]{frog.jpg}
 %\caption{\label{fig:uoa-logo}This is a figure caption.}
-\end{figure}
+%\end{figure}
 
-\begin{table}
-\centering
-\begin{tabular}{l|r}
-Item & Quantity \\\hline
-Widgets & 42 \\
-Gadgets & 13
-\end{tabular}
-\caption{\label{tab:widgets}An example table.}
-\end{table}
+%\begin{table}
+%\centering
+%\begin{tabular}{l|r}
+%Item & Quantity \\\hline
+%Widgets & 42 \\
+%Gadgets & 13
+%\end{tabular}
+%\caption{\label{tab:widgets}An example table.}
+%\end{table}
 
 \subsection{Mathematics}
 
@@ -137,5 +211,15 @@ You can make lists with automatic numbering \dots
 \end{itemize}
 
 We hope you find write\LaTeX\ useful, and please let us know if you have any feedback using the help menu above.
+
+\begin{thebibliography}{9}
+
+\bibitem{lamport94}
+  Michael M. Richter \& Rosina O. Weber,
+  \emph{Case-Based Reasoning},
+  Springer-Verlag Berlin Heidelberg,
+  2013.
+
+\end{thebibliography}
 
 \end{document}

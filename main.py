@@ -206,14 +206,16 @@ class App(tk.Tk):
 
     @classmethod
     def create(cls):
+        weights = Weights()
         target_case = TargetCase()
         instance_cases(retrieve_cases(), target_case)
-        instance = App(target_case)
+        instance = App(target_case, weights)
         return instance
 
-    def __init__(self, target_case):
+    def __init__(self, target_case, weights):
         tk.Tk.__init__(self)
         self.target_case = target_case
+        self.weights = weights
         self.title('CBR Travel Case')
         self.window = None
         self.message_box = None
@@ -970,7 +972,8 @@ class JourneyCase(TargetCase):
         if self.accommodation.index >= case.accommodation.index:
             return 1
         else:
-            return self.accommodation.index/case.accommodation.index
+            diff = case.accommodation.index - self.accommodation.index
+            return (5 - diff)/5
 
     def duration_sim(self, case):
         if self.duration.days == case.duration.days:
