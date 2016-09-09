@@ -5,6 +5,7 @@ import re
 from geopy.exc import GeocoderTimedOut
 
 
+# Function for retrieving cases from the database
 def retrieve_cases():
     conn = psycopg2.connect("dbname='travel'")
     cur = conn.cursor()
@@ -12,6 +13,7 @@ def retrieve_cases():
     return cur.fetchall()
 
 
+# Function for formatting a case list to fit the convention with psycopg2
 def format_case_list_to_database(case):
     new_case = ({
         "case_name": case[0],
@@ -29,6 +31,7 @@ def format_case_list_to_database(case):
     return new_case
 
 
+# Function for formatting a case to fit the convention with psycopg2
 def format_case_instance_to_database(new_case):
     case = ({
         "id": new_case.journey_code.number,
@@ -47,6 +50,7 @@ def format_case_instance_to_database(new_case):
     return case
 
 
+# Function for loading cases to the database
 def load_cases_to_database(cases):
     counter = 1
     list_cases = []
@@ -59,6 +63,7 @@ def load_cases_to_database(cases):
     commit_cases_to_database(tuple_cases)
 
 
+# Resource to add cases to database
 def add_cases_to_database(cases):
     counter = 0
     list_cases = []
@@ -70,6 +75,7 @@ def add_cases_to_database(cases):
     commit_cases_to_database(tuple_cases)
 
 
+# Function for committing cases to the database
 def commit_cases_to_database(case_tuple):
     conn = psycopg2.connect("dbname='travel'")
     cur = conn.cursor()
@@ -101,6 +107,7 @@ def commit_cases_to_database(case_tuple):
     conn.commit()
 
 
+# Function for fixing the region names
 def lower_case_string(st):
     my_list = re.findall('[A-Z][^A-Z]*', st)
     region = ''
@@ -110,6 +117,7 @@ def lower_case_string(st):
     return region[:-1]
 
 
+# Function for loading regions to the database
 def load_regions_to_database(regions):
     regions_list = []
     for key in regions:
@@ -122,6 +130,7 @@ def load_regions_to_database(regions):
     commit_regions_to_database(tuple(regions_list))
 
 
+# Function for committing regions to the database
 def commit_regions_to_database(region_tuple):
     conn = psycopg2.connect("dbname='travel'")
     cur = conn.cursor()
@@ -137,6 +146,7 @@ def commit_regions_to_database(region_tuple):
     conn.commit()
 
 
+# Function for sorting all the cases in the list in the gui-app
 def sort_by(tree, col, descending):
     # grab values to sort
     data = [(tree.set(child, col), child) for child in tree.get_children('')]
@@ -150,9 +160,10 @@ def sort_by(tree, col, descending):
     for ix, item in enumerate(data):
         tree.move(item[1], '', ix)
     # switch the heading so it will sort in the opposite direction
-    tree.heading(col, command=lambda col=col: sortby(tree, col, int(not descending)))
+    tree.heading(col, command=lambda col=col: sort_by(tree, col, int(not descending)))
 
 
+# Changing to float
 def change_numeric(data):
     float_list = []
     for data_tuple in data:
@@ -162,6 +173,7 @@ def change_numeric(data):
     return float_list
 
 
+# Function for creating an empty list of a fixed length
 def fixed_list(number_of_elements):
     x = [None] * number_of_elements
     for i in range(number_of_elements):
@@ -169,6 +181,7 @@ def fixed_list(number_of_elements):
     return x
 
 
+# Function for trying and catching GeoCoderTimeOuts
 def do_geocode(region, geo_locator):
     try:
         return geo_locator.geocode(region)
@@ -176,6 +189,7 @@ def do_geocode(region, geo_locator):
         return do_geocode(region, geo_locator)
 
 
+# Function for merging two dicts
 def merge_dicts(x, y):
     z = x.copy()
     z.update(y)

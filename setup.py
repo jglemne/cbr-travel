@@ -1,6 +1,15 @@
 import openpyxl
+from tools import *
+from globals import regions_global
 
 
+# This loads all the cases and regions into a freshly created database
+def main():
+    load_cases_to_database(get_cases_ascii('reise.cases'))
+    load_regions_to_database(regions_global)
+
+
+# Extracting all the cases from the ascii-file
 def get_cases_ascii(file_name):
     f = open(file_name, 'r')
     cases = {}
@@ -46,48 +55,7 @@ def get_cases_ascii(file_name):
     return cases
 
 
-def count_cases(sheet):
-    is_case = True
-    cell_letter = 'A'
-    cell_number = '1'
-    number_of_cases = 0
-    while is_case:
-        if sheet[cell_letter + cell_number].value is None or sheet[cell_letter + cell_number].value != 'defcase':
-            is_case = False
-        else:
-            number_of_cases += 1
-            cell_int = int(cell_number)
-            cell_int += 16
-            cell_number = str(cell_int)
-    return number_of_cases
-
-
-def get_cases_price_interval(lowest_price, highest_price, my_dict):
-    indices = []
-    for price in range(lowest_price, highest_price):
-        empty_dict = False
-        while not empty_dict:
-            if price in my_dict.values():
-                case = list(my_dict.keys())[list(my_dict.values()).index(price)]
-                indices.append(case)
-                my_dict = remove_key(my_dict, case)
-            else:
-                empty_dict = True
-    return indices
-
-
-def remove_key(d, key):
-    r = dict(d)
-    del r[key]
-    return r
-
-
-def hamming_distance(s1, s2):
-    if len(s1) != len(s2):
-        raise ValueError("Undefined for sequences of unequal length")
-    return sum(el1 != el2 for el1, el2 in zip(s1, s2))
-
-
+# Extracting all the cases from the excel-file
 def get_cases_excel(file_name):
     wb = openpyxl.load_workbook(file_name)
     sheet_names = wb.get_sheet_names()
@@ -117,3 +85,7 @@ def get_cases_excel(file_name):
             cases[case[1]] = case
         case_row += 16
     return cases
+
+
+if __name__ == '__main__':
+    main()

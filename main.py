@@ -9,7 +9,6 @@ import tkinter.messagebox
 from globals import fields_global, drop_downs_global, algorithm
 from tools import *
 from features import *
-# import time
 import heapq
 
 
@@ -17,20 +16,21 @@ def main():
     App.create().mainloop()
 
 
+#  This class creates an instance of the case list visible in the gui-app
 class CaseList:
 
     def __init__(self, nr_of_results, root):
         self.root = root
         self.tree = None
         self.selected_case = None
-        self._setup_widgets()
+        self.setup()
         self.build_tree(nr_of_results, root)
 
-    def _setup_widgets(self):
+    #  setup for the widgets
+    def setup(self):
         container = ttk.Frame()
         container.pack(fill='both', expand=True, padx=(10, 10), pady=(10, 10))
-        # create a treeview with dual scrollbars
-        self.tree = ttk.Treeview(columns=JourneyCase.list, show="headings")
+        self.tree = ttk.Treeview(columns=SourceCase.list, show="headings")
         vsb = ttk.Scrollbar(orient="vertical", command=self.tree.yview)
         hsb = ttk.Scrollbar(orient="horizontal", command=self.tree.xview)
         self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -42,40 +42,35 @@ class CaseList:
         self.tree.bind("<Key>", self.selection)
         self.tree.bind("<ButtonRelease-1>", self.selection)
 
+    #  building the list of cases
     def build_tree(self, nr_of_results, root):
-        for col in JourneyCase.list:
+        for col in SourceCase.list:
             self.tree.heading(col, text=col, command=lambda c=col: sort_by(self.tree, c, 0))
-            # adjust the column's width to the header string
+            # adjust the column's width to the header string, hotel column widened
             if col == 'Hotel name':
                 self.tree.column(col, width=tkFont.Font().measure(col) * 3)
             else:
                 self.tree.column(col, width=tkFont.Font().measure(col))
-        # start_time = time.time()
-        # results = JourneyCase.fprs(root.target_case) if not algorithm['fast'] else JourneyCase.knn(root.target_case)
-        # print("Execution time FPRS: " + str(time.time() - start_time))
-        # print(results[0][1], results[0][0].journey_code.number)
-        # start_time = time.time()
-        # ****** HERE GOES TEST ******
-        # print("Execution time k-NN: " + str(time.time() - start_time))
-        # print(results[0][1], results[0][0].journey_code.number)
-        results = JourneyCase.fprs(root.target_case) if algorithm['fast'] else JourneyCase.knn(root.target_case)
+        results = SourceCase.fprs(root.target_case) if algorithm['fast'] else SourceCase.knn(root.target_case)
         if len(results) < nr_of_results:
             nr_of_results = len(results)
         for item in results[0:nr_of_results]:
             self.tree.insert('', 'end', values=item[0].case_tuples)
 
+    #  when a case is selected in the list, editing and deleting is made possible
+    #  and the selected case is identified
     def selection(self, event):
         self.root.case_buttons_state("normal")
         if event.type == '5':  # mouse click
             item_id = self.tree.identify_row(event.y)
-            self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
+            self.selected_case = SourceCase.codes[self.tree.item(item_id)["values"][1]]
         elif event.type == '2':
-            if (event.keycode == 8320768) & (self.tree.prev(self.tree.focus()) != ''):  # up
+            if (event.keycode == 8320768) & (self.tree.prev(self.tree.focus()) != ''):  # up-button
                 item_id = self.tree.prev(self.tree.focus())
-                self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
-            elif (event.keycode == 8255233) & (self.tree.next(self.tree.focus()) != ''):  # down
+                self.selected_case = SourceCase.codes[self.tree.item(item_id)["values"][1]]
+            elif (event.keycode == 8255233) & (self.tree.next(self.tree.focus()) != ''):  # down-button
                 item_id = self.tree.next(self.tree.focus())
-                self.selected_case = JourneyCase.codes[self.tree.item(item_id)["values"][1]]
+                self.selected_case = SourceCase.codes[self.tree.item(item_id)["values"][1]]
             else:
                 pass
         else:
@@ -87,6 +82,7 @@ class CaseList:
     case = property(get_selected_case)
 
 
+#  This class creates an instance of an input field in the gui-app
 class Field:
     fields = {}
 
@@ -114,6 +110,7 @@ class Field:
     input = property(get_input)
 
 
+#  This class creates an instance of an dropdown selection field in the gui-app
 class DropDown:
     drop_downs = {}
 
@@ -145,6 +142,7 @@ class DropDown:
     input = property(get_input)
 
 
+#  This class creates an instance of the menu seen in the gui-app
 class Menu:
 
     def __init__(self, master):
@@ -196,6 +194,7 @@ class Menu:
         pass
 
 
+# This class creates an instance of the gui-app
 class App(tk.Tk):
     field_row = 0
     field_column = 1
@@ -206,6 +205,7 @@ class App(tk.Tk):
 
     @classmethod
     def create(cls):
+        #  creates the necessary class instances for running the application
         weights = Weights()
         target_case = TargetCase(weights=weights)
         instance_cases(retrieve_cases(), target_case, weights)
@@ -280,7 +280,7 @@ class App(tk.Tk):
         )
         self.dc_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
         self.status_text = tk.StringVar()
-        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using k-NN")
+        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using brute force k-NN")
         self.status = ttk.Label(
             justify="left",
             padding=(10, 2, 10, 2),
@@ -289,20 +289,24 @@ class App(tk.Tk):
         )
         self.status.pack(side=tk.BOTTOM, fill='x')
 
+    #  Whenever the conditions have changed for finding similar cases,
+    #  this function is called
     def get_best_matches(self):
         self.list.tree.delete(*self.list.tree.get_children())
         self.case_buttons_state("disabled")
         for entry in self.entries:
             set_target_case_feature(entry, self.entries[entry].input, self.target_case)
         self.list.build_tree(self.nr_of_results, self)
-        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using k-NN")
+        self.status_text.set("Using FPRS" if algorithm['fast'] else "Using brute force k-NN")
 
+    #  change buttons if possible to edit/delete or not
     def case_buttons_state(self, state):
         self.dc_button.config(state=state)
         self.ec_button.config(state=state)
         self.menu.cb_menu.entryconfig("Edit selected case", state=state)
         self.menu.cb_menu.entryconfig("Delete selected case", state=state)
 
+    #  creates and opens the window where the user can add a case to the case-base
     def add_case_window(self):
         self.window = tk.Toplevel(self)
         self.edit_entries = {}
@@ -344,6 +348,7 @@ class App(tk.Tk):
         )
         self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
 
+    #  extracting information from the form to create a source case instance
     def add_case(self):
         self.list.tree.delete(*self.list.tree.get_children())
         self.case_buttons_state("disabled")
@@ -369,8 +374,8 @@ class App(tk.Tk):
                 new_case[8] = self.edit_entries[entry].input
             else:
                 pass
-        new_case[1] = 'Journey' + str(JourneyCase.max_code)
-        new_case[0] = JourneyCase.max_code
+        new_case[1] = 'Journey' + str(SourceCase.max_code)
+        new_case[0] = SourceCase.max_code
         new_case[2] = ''
         cases_to_create = [new_case]
         instance_cases(cases_to_create, self.target_case)
@@ -378,6 +383,7 @@ class App(tk.Tk):
         self.edit_entries = {}
         self.window.destroy()
 
+    #  creates and opens the window where the user can edit a case in the case-base
     def edit_case_window(self):
         case = self.list.case
         self.window = tk.Toplevel(self)
@@ -422,6 +428,7 @@ class App(tk.Tk):
         )
         self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
 
+    #  extracting information from the form to edit a source case instance
     def edit_case(self, case):
         self.list.tree.delete(*self.list.tree.get_children())
         self.case_buttons_state("disabled")
@@ -431,6 +438,7 @@ class App(tk.Tk):
         self.edit_entries = {}
         self.window.destroy()
 
+    #  creates a message box to confirm deletion of a source case
     def delete_case_message(self):
         answer = tkinter.messagebox.askquestion(
             'Delete case',
@@ -441,20 +449,22 @@ class App(tk.Tk):
             case.delete_case()
             self.get_best_matches()
 
+    #  sets which algorithm is used to retrieve all cases
     def set_algorithm(self):
-        text = 'regular k-NN' if algorithm['fast'] else 'FPRS'
+        text = 'brute force k-NN' if algorithm['fast'] else 'FPRS'
         answer = tkinter.messagebox.askquestion(
             'Set algorithm',
             'Are you sure you want to switch to ' + text + '?'
         )
         if answer == 'yes':
             algorithm['fast'] = not algorithm['fast']
-            self.menu.sim_name = 'Switch to k-NN' if algorithm['fast'] else 'Switch to FPRS'
+            self.menu.sim_name = 'Switch to brute force k-NN' if algorithm['fast'] else 'Switch to FPRS'
             self.menu.sim_menu.entryconfigure(0, label=self.menu.sim_name)
             self.get_best_matches()
             algorithm_state = 'normal' if algorithm['fast'] else 'disabled'
             self.menu.sim_menu.entryconfig("Edit number of keys", state=algorithm_state)
 
+    #  creates and opens the window for edit all the feature weights
     def weights_window(self):
         self.window = tk.Toplevel(self)
         self.weight_entries = {}
@@ -488,6 +498,7 @@ class App(tk.Tk):
         )
         self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
 
+    #  extracts the information given for editing weights and performs the changes
     def edit_weights(self):
         for weight in self.weight_entries:
             entry = self.weight_entries[weight]
@@ -498,6 +509,7 @@ class App(tk.Tk):
         self.window.destroy()
         self.weight_entries = {}
 
+    #  creates and opens the window for edit number of key cases considered when using fprs
     def keys_window(self):
         self.window = tk.Toplevel(self)
         self.window.key_frame = tk.Frame(self.window)
@@ -528,6 +540,7 @@ class App(tk.Tk):
         )
         self.window.apply_button.pack(side=tk.RIGHT, pady=(10, 10), padx=(10, 10))
 
+    #  change the number of key cases that will be considered
     def edit_keys(self):
         algorithm['key cases'] = int(self.key_entry.input)
         self.get_best_matches()
@@ -535,12 +548,14 @@ class App(tk.Tk):
         self.key_entry = None
 
 
+# This class creates an instance of the target case
 class TargetCase:
 
     def __init__(
             self, weights=None, case=None, journey_code=None, holiday_type=None,
             price=None, number_of_persons=None, region=None, transportation=None,
             duration=None, season=None, accommodation=None, hotel=None):
+        # all the feature classes here below can be found in features.py
         self.weights = weights
         self.accommodation = Accommodation(accommodation)
         self.case = case
@@ -554,6 +569,7 @@ class TargetCase:
         self.season = Season(season)
         self.transportation = Transportation(transportation)
 
+    #  used as a resource to quickly get all the information about the target case
     def get_case_list(self):
         return [
             self.case,
@@ -569,6 +585,9 @@ class TargetCase:
             self.hotel.name
         ]
 
+    #  Here below some resource methods are defined as properties
+    #  to easily access, delete and edit all the individual features of the target case
+    #
     def get_accommodation(self):
         return self.accommodation.name
 
@@ -695,7 +714,9 @@ class TargetCase:
     t = property(get_transportation, set_transportation, del_transportation)
 
 
-class JourneyCase(TargetCase):
+# This class creates an instance of a source case
+class SourceCase(TargetCase):
+    #  some useful class parameters
     cases = {}
     holiday_types = {
         'Active': 'Active', 'City': 'City', 'Education': 'Education', 'Recreation': 'Recreation',
@@ -723,7 +744,7 @@ class JourneyCase(TargetCase):
         'Similarity [%]',
         'Case [index]',
         'Holiday type',
-        'Price [NZD]',
+        'Price [€]',
         'Persons [#]',
         'Region in the world',
         'Transport',
@@ -738,20 +759,21 @@ class JourneyCase(TargetCase):
             cls, weights, case, journey_code, holiday_type,
             price, number_of_persons, region, transportation,
             duration, season, accommodation, hotel, target_case):
-        instance = JourneyCase(
-            weights, case, journey_code, holiday_type,
-            price, number_of_persons, region, transportation,
-            duration, season, accommodation, hotel, target_case)
-        cls.cases[instance] = instance
-        cls.codes[journey_code] = instance
+        #  adding information to the class parameters
+        if cls.price_range[0] <= price <= cls.price_range[1]:
+            pass
+        elif price > cls.price_range[1]:
+            cls.price_range[1] = price
+        else:
+            cls.price_range[0] = price
         if journey_code > 1470:
             cls.max_code = journey_code
         if holiday_type not in cls.holiday_types:
             cls.holiday_types[holiday_type] = holiday_type
         if accommodation not in cls.accommodations:
             cls.accommodations[accommodation] = accommodation
-        if instance.duration.days not in cls.durations:
-            cls.durations.append(instance.duration.days)
+        if duration not in cls.durations:
+            cls.durations.append(duration)
         if hotel not in cls.hotels:
             cls.hotels[hotel] = hotel
         if region not in cls.regions:
@@ -760,6 +782,13 @@ class JourneyCase(TargetCase):
             cls.seasons[season] = season
         if transportation not in cls.transportations:
             cls.transportations[transportation] = transportation
+        instance = SourceCase(
+            weights, case, journey_code, holiday_type,
+            price, number_of_persons, region, transportation,
+            duration, season, accommodation, hotel, target_case)
+        cls.cases[instance] = instance
+        cls.codes[journey_code] = instance
+        #  looking for key cases and adding key cases
         if any(cls.key_cases):
             key_case = instance.sim_key_cases()
             if key_case is None:
@@ -770,6 +799,7 @@ class JourneyCase(TargetCase):
             cls.key_cases[instance] = {}
         return instance
 
+    #  brute force k-NN algorithm for retrieving cases
     @classmethod
     def knn(cls, case):
         similarities = {}
@@ -777,6 +807,7 @@ class JourneyCase(TargetCase):
             similarities[instance] = instance.similarity(case)
         return sorted(similarities.items(), key=operator.itemgetter(1), reverse=True)
 
+    #  full footprint-based algorithm for retrieving cases
     @classmethod
     def fprs(cls, case):
         similarities = {}
@@ -788,6 +819,7 @@ class JourneyCase(TargetCase):
             similarity = float("{0:.2f}".format(round(similarity, 2)))
             key_sims.append(similarity)
             key_instances[similarity] = instance
+        #  here is where it says how many key case-groups will be considered
         keys = heapq.nlargest(algorithm['key cases'], key_sims)
         for key in keys:
             multiple_key_instances[key_instances[key]] = key
@@ -810,22 +842,30 @@ class JourneyCase(TargetCase):
         self.hotel = Hotel(hotel)
         self.journey_code = JourneyCode(journey_code)
         self.number_of_persons = NumberOfPersons(number_of_persons)
-        self.price = Price(price, number_of_persons)
+        self.price = Price(price, number_of_persons, duration)
         self.region = Region(region)
         self.season = Season(season)
         self.transportation = Transportation(transportation)
         self.target_case = target_case
-        self.similarity(self.target_case)
 
+    #  Help method for finding the key cases,
+    #  returning a key case if the similarity is >= 0.75,
+    #  otherwise returning None, implying that the new instance will
+    #  be a new key case
     def sim_key_cases(self):
         key_case = None
         for instance in self.key_cases:
             similarity = self.similarity(instance, journey_code="skip", hotel="skip")
             sim = float("{0:.2f}".format(round(similarity, 2)))
+            #  to change nr of total key cases, edit this number
+            #  0.75 was chosen after testing many values in order
+            #  to find the one which gave the least number of
+            #  considered cases but still gave the correct result
             if sim >= 0.75:
                 return instance
         return key_case
 
+    #  Method for solid deletion of a source case instance
     def delete_case(self):
         del self.codes[self.journey_code.number]
         del self.cases[self]
@@ -841,6 +881,7 @@ class JourneyCase(TargetCase):
         del self.transportation
         del self
 
+    #  Property resource - get all the case features of the instance as a dictionary
     def get_case_features(self):
         return {
             'Case': self.journey_code.number,
@@ -855,6 +896,8 @@ class JourneyCase(TargetCase):
             'Hotel': self.hotel.name
         }
 
+    #  Property resource - get all the case features and the similarity
+    #  to the target case as a tuple
     def get_case_tuple(self):
         return (
             "{0:.2f}".format(round(self.similarity(self.target_case)*100, 2)),
@@ -873,6 +916,7 @@ class JourneyCase(TargetCase):
     features = property(get_case_features)
     case_tuples = property(get_case_tuple)
 
+    #  The main similarity function for comparing the instance with a given case
     def similarity(
             self,
             case,
@@ -887,6 +931,7 @@ class JourneyCase(TargetCase):
             season=None,
             transportation=None
     ):
+        #  Below here, all the local similarity metrics are initiated
         sim_int = 0
         total_weight = 0
         # Accommodation
@@ -971,6 +1016,8 @@ class JourneyCase(TargetCase):
             total_weight += 1
         return sim_int/total_weight
 
+    #  Here below are all the feature specific similarity functions
+    #
     def accommodation_sim(self, case):
         if self.accommodation.index >= case.accommodation.index:
             return 1
@@ -1012,32 +1059,42 @@ class JourneyCase(TargetCase):
     def number_of_persons_sim(self, case):
         if self.number_of_persons.total == case.number_of_persons.total:
             return 1
-        # elif abs(self.number_of_persons.total - case.number_of_persons.total) < 2:
-        #     return 0.5
-        # else:
-        #     return 0
         elif abs(self.number_of_persons.total - case.number_of_persons.total) <= 4:
             return (5 - abs(self.number_of_persons.total - case.number_of_persons.total)) / 5
         else:
             return 0
 
     def price_sim(self, case):
-        if case.price.per_person is None:
-            if (self.price.total <= case.price.total) | (case.price.total > self.price_range[1]):
-                return 1
-            elif case.price.total < self.price_range[0]:
-                return 0
+        if case.price.total < 0:
+            return 0
+        elif case.price.pppd is None:
+            if case.price.per_person is not None:
+                if self.price.per_person <= case.price.per_person:
+                    return 1
+                else:
+                    case_diff = self.price.per_person - case.price.per_person
+                    price_range = self.price_range[1] / case.number_of_persons.total
+                    return (price_range - case_diff) / price_range
+            elif case.price.per_day is not None:
+                if self.price.per_day <= case.price.per_day:
+                    return 1
+                else:
+                    case_diff = self.price.per_day - case.price.per_day
+                    price_range = self.price_range[1] / case.duration.days
+                    return (price_range - case_diff) / price_range
             else:
-                return 1 - ((self.price.total - case.price.total) / (self.price_range[1] - self.price_range[0]))
+                if self.price.total <= case.price.total:
+                    return 1
+                else:
+                    price_range = (self.price_range[1] - self.price_range[0])
+                    return (price_range - (self.price.total - case.price.total)) / price_range
         else:
-            if (self.price.per_person <= case.price.per_person) | (case.price.per_person > self.price_range[1]):
+            if self.price.pppd <= case.price.pppd:
                 return 1
-            elif case.price.per_person < self.price_range[0]/case.number_of_persons.total:
-                return 0
             else:
-                case_diff = (self.price.per_person - case.price.per_person)
-                range_diff = (self.price_range[1] - self.price_range[0])/case.number_of_persons.total
-                return 1 - (case_diff / range_diff)
+                case_diff = self.price.pppd - case.price.pppd
+                price_range = self.price_range[1] / case.number_of_persons.total / case.duration.days
+                return (price_range - case_diff) / price_range
 
     def region_sim(self, case):
         if self.region.name == case.region.name:
@@ -1070,18 +1127,21 @@ class JourneyCase(TargetCase):
         return case.transportation.similarity[self.transportation.similarity.index(1.0)]
 
 
+# This function is used to make instances of all the source cases
 def instance_cases(cases, target_case, weights):
     for case in cases:
         case = list(case)
-        JourneyCase.create(
+        SourceCase.create(
             weights, case[1], case[0], case[3], int(case[4]),
             int(case[5]), case[6], case[7], int(case[8]),
             case[9], case[10], case[11], target_case)
 
 
+# This function is used to set a feature for a given case
+# based on what is entered in the gui-app
 def set_target_case_feature(feature_name, feature_entry, target_case):
     if feature_name == 'Accommodation':
-        if feature_entry in JourneyCase.accommodations:
+        if feature_entry in SourceCase.accommodations:
             target_case.a = feature_entry
         else:
             del target_case.a
@@ -1094,12 +1154,12 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
         else:
             del target_case.d
     elif feature_name == 'Holiday type':
-        if feature_entry in JourneyCase.holiday_types:
+        if feature_entry in SourceCase.holiday_types:
             target_case.ht = feature_entry
         else:
             del target_case.ht
     elif feature_name == 'Hotel':
-        if feature_entry in JourneyCase.hotels:
+        if feature_entry in SourceCase.hotels:
             target_case.h = feature_entry
         else:
             del target_case.h
@@ -1125,12 +1185,12 @@ def set_target_case_feature(feature_name, feature_entry, target_case):
         else:
             del target_case.r
     elif feature_name == 'Season':
-        if feature_entry in JourneyCase.seasons:
+        if feature_entry in SourceCase.seasons:
             target_case.s = feature_entry
         else:
             del target_case.s
     elif feature_name == 'Transportation':
-        if feature_entry in JourneyCase.transportations:
+        if feature_entry in SourceCase.transportations:
             target_case.t = feature_entry
         else:
             del target_case.t

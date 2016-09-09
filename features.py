@@ -1,13 +1,11 @@
 import psycopg2
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderServiceError
-from globals import adaptables
 from tools import do_geocode
 
 
 class Accommodation:
     indices = {'HolidayFlat': 1, 'OneStar': 2, 'TwoStars': 3, 'ThreeStars': 4, 'FourStars': 5, 'FiveStars': 6}
-    adaptable = adaptables['Accommodation']
 
     def __init__(self, accommodation=None):
         self.name = accommodation
@@ -15,20 +13,19 @@ class Accommodation:
 
 
 class Duration:
-    adaptable = adaptables['Duration']
 
     def __init__(self, duration=None):
         self.days = duration
 
 
 class HolidayType:
+    # Using a binary convention to navigate through the decision tree
     groups = {
         'Arbitrary': '0000000', 'Active': '0001001', 'City': '0010010', 'Education': '0011011',
         'Recreation': '0100100', 'Shopping': '0101010', 'Language': '0110011', 'Bathing': '0111100',
         'Wandering': '1000100', 'Adventure': '1001001', 'Diving': '1010001', 'Skiing': '1011001',
         'Surfing': '1100001'
     }
-    adaptable = adaptables['Holiday type']
 
     def __init__(self, holiday_type=None):
         self.name = holiday_type
@@ -36,40 +33,58 @@ class HolidayType:
 
 
 class Hotel:
-    adaptable = adaptables['Hotel']
 
     def __init__(self, hotel=None):
         self.name = hotel
 
 
 class JourneyCode:
-    # weight = weights_global['Journey code']
-    adaptable = adaptables['Journey code']
 
     def __init__(self, journey_code=None):
         self.number = journey_code
 
 
 class NumberOfPersons:
-    adaptable = adaptables['Number of persons']
 
     def __init__(self, number_of_persons=None):
         self.total = number_of_persons
 
 
 class Price:
-    adaptable = adaptables['Price']
 
-    def __init__(self, price=None, number_of_persons=None):
+    def __init__(self, price=None, number_of_persons=None, duration=None):
+        try:
+            if number_of_persons <= 0:
+                self.per_person = None
+                number_of_persons = None
+        except TypeError:
+            pass
+        try:
+            if duration <= 0:
+                self.per_day = None
+                duration = None
+        except TypeError:
+            pass
         self.total = price
-        if number_of_persons is not None:
+        if (number_of_persons is not None) & (duration is not None):
+            self.pppd = price/number_of_persons/duration
             self.per_person = price/number_of_persons
+            self.per_day = price/duration
+        elif number_of_persons is not None:
+            self.per_person = price/number_of_persons
+            self.per_day = None
+            self.pppd = None
+        elif duration is not None:
+            self.per_day = price/duration
+            self.per_person = None
+            self.pppd = None
         else:
             self.per_person = None
+            self.per_day = None
+            self.pppd = None
 
 
 class Region:
-    adaptable = adaptables['Region']
     distance = 2000
     regions = {}
 
@@ -88,6 +103,7 @@ class Region:
     def list_regions(cls):
         return {}.fromkeys(cls.regions).keys()
 
+    #  Checking for regions in the database, otherwise checking with Google Maps
     def new_region(self, region):
         self.regions[region] = {'Long': '', 'Lat': ''}
         conn = psycopg2.connect("dbname='travel'")
@@ -113,7 +129,6 @@ class Region:
 
 
 class Season:
-    adaptable = adaptables['Season']
     seasons = {
         'January': ['Winter', 'Winter'],
         'February': ['Spring', 'Winter'],
@@ -138,9 +153,8 @@ class Season:
 
 
 class Transportation:
-    adaptable = adaptables['Transportation']
     similarities = {
-        'Car': [1, 0.5, 0.0, 0.8],
+        'Car': [1, 0.5, 0.2, 0.8],
         'Coach': [0.5, 1.0, 0.0, 0.7],
         'Plane': [0.0, 0.0, 1.0, 0.0],
         'Train': [0.3, 0.7, 0.0, 1.0]
@@ -162,10 +176,10 @@ class Weights:
         'Hotel': 20,
         'Journey code': 200,
         'Number of persons': 2,
-        'Price': 7,
+        'Price': 9,
         'Region': 2,
         'Season': 4,
-        'Transportation': 4
+        'Transportation': 3
     }
 
     def __init__(self):
