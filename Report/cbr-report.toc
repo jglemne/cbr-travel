@@ -45,3 +45,8 @@
 \contentsline {section}{\numberline {5}Interface}{20}{section.5}
 \contentsline {subsection}{\numberline {5.1}Extra features}{21}{subsection.5.1}
 \contentsline {section}{\numberline {6}Installation and running program}{22}{section.6}
+\contentsline {subsection}{\numberline {6.1}Quick installation}{22}{subsection.6.1}
+\contentsline {subsection}{\numberline {6.2}Detailed installation guide}{22}{subsection.6.2}
+\contentsline {subsubsection}{\numberline {6.2.1}Install PostgreSQL}{22}{subsubsection.6.2.1}
+\contentsline {subsubsection}{\numberline {6.2.2}Create and restore database}{22}{subsubsection.6.2.2}
+\contentsline {subsection}{\numberline {6.3}Running the application}{24}{subsection.6.3}

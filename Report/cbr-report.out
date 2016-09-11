@@ -44,3 +44,8 @@
 \BOOKMARK [1][-]{section.5}{Interface}{}% 44
 \BOOKMARK [2][-]{subsection.5.1}{Extra features}{section.5}% 45
 \BOOKMARK [1][-]{section.6}{Installation and running program}{}% 46
+\BOOKMARK [2][-]{subsection.6.1}{Quick installation}{section.6}% 47
+\BOOKMARK [2][-]{subsection.6.2}{Detailed installation guide}{section.6}% 48
+\BOOKMARK [3][-]{subsubsection.6.2.1}{Install PostgreSQL}{subsection.6.2}% 49
+\BOOKMARK [3][-]{subsubsection.6.2.2}{Create and restore database}{subsection.6.2}% 50
+\BOOKMARK [2][-]{subsection.6.3}{Running the application}{section.6}% 51

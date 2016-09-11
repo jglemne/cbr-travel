@@ -513,33 +513,57 @@ If the user wants to switch retrieval algorithm, it is also possible by using th
 \section{Installation and running program}
 \label{sec:install}
 
-The program has been tested on a Mac OS X v10.11.6 with Python v3.4.3 and PostgreSQL v9.5.1. To be able to run the program the user first needs to install PostgreSQL, geopy and psycopg2. Using homebrew and pip3, installation can be done with these commands in the terminal:
+The program has been tested on a Mac OS X v10.11.6 with Python v3.4.3 and PostgreSQL v9.5.1. 
+
+\subsection{Quick installation}
+\label{sec:quick}
+
+\begin{enumerate}
+\item Install PostgreSQL
+\item Start server program postgres
+\item Create and restore database using:
+\begin{lstlisting}
+$ createdb travel
+$ psql travel < traveldb.sql
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Detailed installation guide}
+\label{sec:detail}
+
+If PostgreSQL already is installed on your machine, skip Section \ref{sec:install-postgres} and proceed to Section \ref{sec:restore}.
+
+\subsubsection{Install PostgreSQL}
+\label{sec:install-postgres}
+
+To be able to run the program, PostgreSQL has to be installed. This can be done in a number of different ways, but using Homebrew, this is done by using the following command in the terminal:
 
 \begin{lstlisting}
 $ brew install postgresql
-$ pip3 install geopy
-$ pip3 install psycopg2
+\end{lstlisting}
+Check version with:
+
+\begin{lstlisting}
+$ psql --version
 \end{lstlisting}
 
-When that is done, the database server program \textit{postgres} needs to be started. This is done with:
+\subsubsection{Create and restore database}
+\label{sec:restore}
+
+If the installation was successful, start up the server program \textit{postgres} and keep it running. This might be done using:
 
 \begin{lstlisting}
 $ postgres -D /usr/local/var/postgres
 \end{lstlisting}
-
-The location should be where the file \textit{postgresql.conf} is located. That will leave the server running in the foreground so it is important to leave that tab of the terminal open and open a new one to restore the database. Navigate to the folder where the source files are located and especially where the file \textit{traveldb.dump} is. To restore the database, use following command:
-
-\begin{lstlisting}
-$ pg_restore -C -d postgres traveldb.dump
-\end{lstlisting}
-
-When that is done, the program can be started with:
+The location should be where the file \textit{postgresql.conf} is located. After that, open up a new tab of the terminal and navigate to the folder where the file \textit{traveldb.sql} is located. To create and restore the database, use:
 
 \begin{lstlisting}
-$ python3 main.py
+$ createdb travel
+$ psql travel < traveldb.sql
 \end{lstlisting}
+This will probably generate some warnings/errors about roles but since default behaviour is to replace all roles with the one used for the import, the application should nevertheless run smoothly.
 
-If there for some reason would be any problem with restoring the database with above given command, the database is created from scratch with commands given here below, given that there exists no database with the name "travel".
+If - and only if - the application will not start after following above given steps, the database with all the values can still be created from scratch with commands given here below, given that there exists no previous database with the name \textit{travel}.
 
 \begin{lstlisting}
 $ createdb travel
@@ -565,18 +589,28 @@ travel=# CREATE TABLE IF NOT EXISTS "regions" (
 	"longitude" float
 );
 \end{lstlisting}
-
-To then load all the cases to the database, just run this in another terminal tab:
+To then load all the cases and values to the database, just navigate to the source code and run following command:
 
 \begin{lstlisting}
-$ python3 setup.py
+$ python3 load.py
 \end{lstlisting}
 
-When this is done, the program can be run in the same way as before:
+\subsection{Running the application}
+
+To run the application, simply double click the application icon \textit{CBR Travel Suggest} while the \textit{postgres} server is running. 
+
+To run the application from the command line and configure the code, geopy and psycopg2 must be installed using:
+
+\begin{lstlisting}
+$ pip3 install geopy
+$ pip3 install psycopg2
+\end{lstlisting}
+Then, if the \textit{postgres} server is running, the application can be started with:
 
 \begin{lstlisting}
 $ python3 main.py
 \end{lstlisting}
+As said before, the application has only been tested with Python v3.4.3 but should be running smoothly with all versions of Python 3. 
 
 \clearpage
 

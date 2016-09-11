@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+    <!-- Globally unique identifier -->
+    <key>CFBundleIdentifier</key>
+    <string>com.joelglemne.cbrtravel</string>
+    
+    <key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+
+    <!-- Used by py2app to generate application bundle -->
+    <key>CFBundleName</key>
+    <string>CBR Travel Suggest</string>
+
+    <!-- Package type is an Application -->
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <!-- Version number - appears in About box -->
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+
+    <!-- Copyright notice - apears in About box -->
+    <key>NSHumanReadableCopyright</key>
+    <string>© Joel Glemne 2016</string>
+
+    <!-- Icon file name -->
+    <key>CFBundleIconFile</key>
+    <string>CBR Travel Suggest</string>
+
+    <!-- Executable name? -->
+    <key>CFBundleExecutable</key>
+    <string>CBR Travel Suggest</string>
+
+    <!-- Bundle display name -->
+    <key>CFBundleDisplayName</key>
+    <string>CBR Travel Suggest</string>
+</dict>
+</plist>

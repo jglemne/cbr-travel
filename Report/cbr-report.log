@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.8.20)  9 SEP 2016 19:24
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.8.20)  11 SEP 2016 14:35
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -687,7 +687,7 @@ e
 ABD: EveryShipout initializing macros
 \c@lstlisting=\count151
 
-<uoa-logo.png, id=191, 225.84375pt x 216.81pt>
+<uoa-logo.png, id=212, 225.84375pt x 216.81pt>
 File: uoa-logo.png Graphic file (type png)
  <use uoa-logo.png>
 Package pdftex.def Info: uoa-logo.png used on input line 70.
@@ -738,7 +738,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 123--125
 
 [5] [6
 
-] [7] <taxonomy-tree-ht.png, id=310, 1280.785pt x 511.9125pt>
+] [7] <taxonomy-tree-ht.png, id=336, 1280.785pt x 511.9125pt>
 File: taxonomy-tree-ht.png Graphic file (type png)
 
 <use taxonomy-tree-ht.png>
@@ -765,7 +765,7 @@ Overfull \hbox (13.00482pt too wide) in paragraph at lines 393--394
 ML/cmm/m/it/12 sim[] \OT1/cmr/m/n/12 =
  []
 
-[15] <fprs-1.png, id=355, 1204.5pt x 982.67125pt>
+[15] <fprs-1.png, id=380, 1204.5pt x 982.67125pt>
 File: fprs-1.png Graphic file (type png)
  <use fprs-1.png>
 Package pdftex.def Info: fprs-1.png used on input line 431.
@@ -784,7 +784,7 @@ li-ca-tion uses the Python
 
 [18
 
-] [19] <start-page.png, id=377, 1275.76625pt x 905.3825pt>
+] [19] <start-page.png, id=402, 1275.76625pt x 905.3825pt>
 File: start-page.png Graphic file (type png)
 
 <use start-page.png>
@@ -793,34 +793,44 @@ Package pdftex.def Info: start-page.png used on input line 486.
  [20
 
  <./start-page.png>]
-<edit-weights.png, id=384, 848.16875pt x 628.3475pt>
+<edit-weights.png, id=409, 848.16875pt x 628.3475pt>
 File: edit-weights.png Graphic file (type png)
  <use edit-weights.png>
 Package pdftex.def Info: edit-weights.png used on input line 501.
 (pdftex.def)             Requested size: 312.00119pt x 231.13306pt.
 
-[21 <./edit-weights.png>] [22
+[21 <./edit-weights.png>]
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 527.
 
-] [23] [24
+
+(/usr/local/texlive/2016/texmf-dist/tex/latex/base/omlcmr.fd
+File: omlcmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <12> not available
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 527.
+ [22
+
+] [23]
+[24] [25
 
 ]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 600.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 600.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 634.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 634.
  (./cbr-report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 600.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 600.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 634.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 634.
 Package rerunfilecheck Info: File `cbr-report.out' has not changed.
-(rerunfilecheck)             Checksum: 26299C8E00A4C9BB3F70B3241FBFC92A;3203.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 600.
+(rerunfilecheck)             Checksum: BA01F72681FB0D41C9B9BB680C1CB9E8;3586.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 634.
  ) 
 Here is how much of TeX's memory you used:
- 18778 strings out of 493014
- 341941 string characters out of 6133351
- 444290 words of memory out of 5000000
- 21862 multiletter control sequences out of 15000+600000
+ 18813 strings out of 493014
+ 342515 string characters out of 6133351
+ 447290 words of memory out of 5000000
+ 21880 multiletter control sequences out of 15000+600000
  12400 words of font info for 44 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 62i,8n,72p,633b,1786s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 62i,8n,72p,633b,1784s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb>
@@ -834,10 +844,10 @@ cal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local
 texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/t
 exlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/te
 xlive/2016/texmf-dist/fonts/type1/public/eurosym/feymr10.pfb>
-Output written on cbr-report.pdf (25 pages, 708686 bytes).
+Output written on cbr-report.pdf (26 pages, 711157 bytes).
 PDF statistics:
- 517 PDF objects out of 1000 (max. 8388607)
- 462 compressed objects within 5 object streams
- 134 named destinations out of 1000 (max. 500000)
- 406 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 560 PDF objects out of 1000 (max. 8388607)
+ 503 compressed objects within 6 object streams
+ 148 named destinations out of 1000 (max. 500000)
+ 446 words of extra memory for PDF output out of 10000 (max. 10000000)
 
