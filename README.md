@@ -15,7 +15,7 @@ $ pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
 Create and restore database:
 ```
 $ createdb travel
-$ psql travel < traveldb . sql
+$ psql travel < traveldb.sql
 ```
 
 ### Running the program
