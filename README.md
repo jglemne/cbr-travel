@@ -1,6 +1,8 @@
 # CBR Travel Suggest
 Project in the course COMPSCI760 Datamining and Machine Learning at University of Auckland, semester 2 2016. The aim of the project was to implement a case-based reasoner for dealing with a given base of travel cases.
 
+The program was implemented in Python 3 and PostgreSQL, using Python libraries Geopy, Tkinter and Psycopg2. Retrieval algorithm used was standard k-NN, with the option of using brute force or non-fuzzy footprint-based retrieval. 
+
 The program has been tested on a Mac OS X v10.11.6 with PostgreSQL v9.5.1.
 
 ### Quick installation
@@ -22,4 +24,4 @@ $ psql travel < traveldb.sql
 Make sure the server is running (check with `$ pg_ctl status -D /usr/local/var/postgres`) and then start the app, *CBR Travel Suggest*.
 
 ### Other
-For more details about implementation and how to edit code, read the report.
+For more details about implementation and how to edit code, read the report. 
