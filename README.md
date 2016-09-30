@@ -19,7 +19,7 @@ $ psql travel < traveldb.sql
 ```
 
 ### Running the program
-Make sure the server is running (check with `$ pg_ctl -D /usr/local/var/postgres`) and then start the app, *CBR Travel Suggest*.
+Make sure the server is running (check with `$ pg_ctl status -D /usr/local/var/postgres`) and then start the app, *CBR Travel Suggest*.
 
 ### Other
 For more details about implementation and how to edit code, read the report.
